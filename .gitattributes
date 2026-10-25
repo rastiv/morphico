@@ -1,0 +1,6 @@
+# LF line endings everywhere (local Windows checkout, GitHub Actions on Linux, npm package)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
