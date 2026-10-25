@@ -1,0 +1,50 @@
+{
+  "name": "morphico",
+  "version": "0.0.1",
+  "description": "Morphing line-art icons: smooth SVG path transitions between digits and other states. No dependencies.",
+  "license": "MIT",
+  "author": "Raycho Ivanov",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rastiv/morphico.git"
+  },
+  "homepage": "https://github.com/rastiv/morphico#readme",
+  "bugs": {
+    "url": "https://github.com/rastiv/morphico/issues"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/morphico.mjs"
+    }
+  },
+  "module": "./dist/morphico.mjs",
+  "types": "./dist/types/index.d.ts",
+  "jsdelivr": "./dist/morphico.js",
+  "unpkg": "./dist/morphico.js",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "dev": "node tools/serve.ts",
+    "build": "node tools/build.ts",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tools/tsconfig.json",
+    "check": "node tools/check.ts",
+    "verify": "node tools/verify.ts",
+    "prepublishOnly": "npm run typecheck && npm run build"
+  },
+  "keywords": [
+    "icons",
+    "svg",
+    "morph",
+    "animation",
+    "digits",
+    "countdown"
+  ],
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
+  }
+}

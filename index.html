@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>morphico — preview</title>
+<style>
+  :root { color-scheme: dark; --fg: #e8e8ea; --dim: #6b6b75; --accent: #7aa2ff; --bg: #121216; --panel: #1b1b22; --stroke: #e8e8ea; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, sans-serif; }
+  main { display: grid; gap: 20px; justify-items: center; padding: 24px; }
+  .stage { width: 360px; height: 360px; background: var(--panel); border-radius: 16px; }
+  .stage svg { width: 100%; height: 100%; overflow: visible; }
+  #morph-path { stroke: var(--stroke); }
+  #grid-layer { display: none; stroke: var(--dim); }
+  .show-grid #grid-layer { display: inline; }
+  #debug-layer { display: none; }
+  .debugging #debug-layer { display: inline; }
+  .debugging #morph-path { stroke: transparent; }
+  .digits { display: flex; gap: 6px; }
+  .digits button { width: 40px; height: 40px; padding: 4px; border: 1px solid #2c2c36; border-radius: 8px; background: var(--panel); color: var(--dim); font: 18px system-ui, sans-serif; cursor: pointer; }
+  .digits button.active { border-color: var(--accent); color: var(--fg); }
+  .digits button.not-drawn { border-style: dashed; }
+  .digits svg { width: 100%; height: 100%; }
+  .sets { display: flex; padding: 3px; gap: 3px; background: var(--panel); border: 1px solid #2c2c36; border-radius: 10px; }
+  .sets button { min-width: 56px; padding: 6px 12px; border: 0; border-radius: 7px; background: transparent; color: var(--dim); font: inherit; font-weight: 600; cursor: pointer; }
+  .sets button.active { background: var(--accent); color: var(--bg); }
+  .controls { display: grid; grid-template-columns: auto 1fr auto; gap: 8px 12px; align-items: center; width: 360px; }
+  .controls input[type=range], .controls select { width: 100%; }
+  .controls output { min-width: 4ch; text-align: right; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .colors { display: flex; align-items: center; gap: 6px; }
+  .colors button { width: 22px; height: 22px; padding: 0; border: 2px solid transparent; border-radius: 50%; background: var(--swatch); cursor: pointer; }
+  .colors button.active { border-color: var(--fg); box-shadow: 0 0 0 2px var(--bg) inset; }
+  .colors input[type=color] { width: 30px; height: 24px; padding: 0; border: 1px solid #2c2c36; border-radius: 6px; background: var(--panel); cursor: pointer; }
+  .toggles { display: flex; gap: 16px; }
+  pre { width: 560px; max-width: 90vw; margin: 0; padding: 12px; background: var(--panel); border-radius: 8px; color: var(--dim); font-size: 11px; white-space: pre-wrap; word-break: break-all; }
+  .error { color: #ff7a7a; }
+</style>
+</head>
+<body>
+<main>
+  <div class="stage">
+    <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <image id="reference-image" x="0" y="0" width="24" height="24"/>
+      <g id="grid-layer"></g>
+      <path id="morph-path" stroke-width="1"/>
+      <g id="debug-layer"></g>
+    </svg>
+  </div>
+
+  <div class="sets" id="set-buttons" role="group" aria-label="Icon set"></div>
+
+  <div class="digits" id="digit-buttons"></div>
+
+  <div class="controls">
+    <label for="duration">Duration</label>
+    <input id="duration" type="range" min="100" max="3000" step="50" value="600">
+    <output id="duration-output">600ms</output>
+
+    <label for="easing">Easing</label>
+    <select id="easing"></select>
+    <span></span>
+
+    <label for="progress">Progress</label>
+    <input id="progress" type="range" min="0" max="1" step="0.001" value="1">
+    <output id="progress-output">1.00</output>
+
+    <label for="color">Color</label>
+    <div class="colors" id="color-swatches">
+      <input id="color" type="color" value="#e8e8ea" title="Custom color">
+    </div>
+    <output id="color-output">#e8e8ea</output>
+
+    <label for="reference-opacity">Reference</label>
+    <input id="reference-opacity" type="range" min="0" max="1" step="0.05" value="0.3">
+    <output id="reference-output">30%</output>
+  </div>
+
+  <div class="toggles">
+    <label><input id="auto-play" type="checkbox"> Auto-play (count)</label>
+    <label><input id="show-grid" type="checkbox"> Grid</label>
+    <label><input id="show-debug" type="checkbox"> Show segments &amp; control points</label>
+  </div>
+
+  <pre id="path-output"></pre>
+</main>
+
+<!-- TypeScript, served as JavaScript by tools/serve.ts (npm run dev) -->
+<script type="module" src="preview/main.ts"></script>
+</body>
+</html>

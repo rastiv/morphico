@@ -1,0 +1,21 @@
+{
+  // Library (src/) and preview page (preview/): browser code, no Node types.
+  // Only erasable TypeScript syntax (no enums, namespaces, parameter properties), so the dev server
+  // can serve .ts files by just stripping the types.
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "nodenext",
+    "lib": ["es2023", "dom"],
+    "types": [],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": ["src", "preview"]
+}

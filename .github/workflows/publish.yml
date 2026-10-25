@@ -1,0 +1,26 @@
+# Publishes to npm when a version tag (v1.2.3) is pushed.
+# Uses npm Trusted Publishing (OIDC): no token secret; the package's npm settings must list this repo + workflow.
+name: Publish
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: Tag must match package.json version
+        run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
+      - run: npm ci
+      # npm publish runs the prepublishOnly script first: typecheck + build
+      - run: npm publish --access public

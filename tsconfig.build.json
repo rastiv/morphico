@@ -1,0 +1,12 @@
+{
+  // Used by tools/build.ts: compiles src/ to JavaScript + declarations in .build/ (bundled into dist/ afterwards).
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "rewriteRelativeImportExtensions": true,
+    "rootDir": "src",
+    "outDir": ".build"
+  },
+  "include": ["src"]
+}

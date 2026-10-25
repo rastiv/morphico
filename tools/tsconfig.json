@@ -1,0 +1,8 @@
+{
+  // Dev tools: run directly by Node (node tools/<name>.ts), with Node types.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["."]
+}
