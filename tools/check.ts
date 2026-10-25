@@ -1,12 +1,16 @@
 // Optimizer: searches better pair layouts for morph pairs.
-// Usage: node tools/check.ts <set> A B C ...   → pairs A→B, A→C, …; prints the cost before → after and the
-// pairLayouts entries that reach it. Put closed shapes (loops) second: only the second state gets start segments tried.
+// Usage: node tools/check.ts <set> A B C ... [--tracing=<name>]
+//   → pairs A→B, A→C, …; prints the cost before → after and the pairLayouts entries that reach it.
+// Put closed shapes (loops) second: only the second state gets start segments tried.
+// --tracing=<name>: also lays out the second state along alternativeStrokes[name] (fitted against A as is / reversed).
 import { defaultShapes, layoutStrokes, reorderSegments, segmentCountOf, strokePiece } from '../src/geometry.ts';
 import type { PairLayout, PathNumbers, Stroke } from '../src/types.ts';
 import { loadIconSet, morphCost } from './shared.ts';
 
-const [setName, state, ...otherStates] = process.argv.slice(2);
-if (!setName || state === undefined) throw new Error('usage: node tools/check.ts <set> A B C ...');
+const options = process.argv.slice(2).filter((argument) => argument.startsWith('--'));
+const tracing = options.find((option) => option.startsWith('--tracing='))?.slice('--tracing='.length);
+const [setName, state, ...otherStates] = process.argv.slice(2).filter((argument) => !argument.startsWith('--'));
+if (!setName || state === undefined) throw new Error('usage: node tools/check.ts <set> A B C ... [--tracing=<name>]');
 const iconSet = await loadIconSet(setName);
 const shapes = defaultShapes(iconSet);
 
@@ -103,6 +107,16 @@ for (const otherState of otherStates) {
     // re-lay `otherState` against the unchanged `state`
     const fittedOther = fitBreakpoints(iconSet.strokes[otherState], reversed ? reversedPath(shapes[state]) : shapes[state]);
     consider(fittedOther.cost, describe(reversed ? { reversed } : {}, otherState, { breakpoints: fittedOther.breakpoints }));
+  }
+  if (tracing) {
+    const tracingStrokes = iconSet.alternativeStrokes[tracing];
+    if (!tracingStrokes) throw new Error(`${setName} has no alternative tracing "${tracing}"`);
+    for (const reversed of [false, true]) {
+      const fitted = fitBreakpoints(tracingStrokes, reversed ? reversedPath(shapes[state]) : shapes[state]);
+      const description = describe(reversed ? { reversed } : {}, otherState, { tracing, breakpoints: fitted.breakpoints });
+      console.log(`  tracing candidate ${fitted.cost.toFixed(0)}: ${description}`);
+      consider(fitted.cost, description);
+    }
   }
   console.log(`${state}->${otherState}`, costBefore.toFixed(0), '->', best.cost.toFixed(0), best.description);
 }

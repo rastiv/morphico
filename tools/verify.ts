@@ -1,7 +1,7 @@
 // Verifies a set's pair layouts: number count, continuity, shape deviation from the default layout
 // (≤ ~0.12 is sampling noise, more means the picture changed) and morph cost before → after.
 // Usage: node tools/verify.ts <set> [states...]   (default: all pairs)
-import { defaultShapes, shapeForPair, toSegments } from '../src/geometry.ts';
+import { defaultShapes, rotateAroundCenter, shapeForPair, toSegments } from '../src/geometry.ts';
 import type { PathNumbers, Point } from '../src/types.ts';
 import { loadIconSet, morphCost } from './shared.ts';
 
@@ -44,8 +44,12 @@ for (const state of onlyStates.length ? onlyStates : states) {
       hausdorffDistance(samplePoints(pathA), referencePoints[state]),
       hausdorffDistance(samplePoints(pathB), referencePoints[otherState]),
     );
+    // spinning pairs blend in the turning frame: compare with the target turned back
+    const spin = iconSet.spins[state]?.[otherState] ?? 0;
+    const costAfter = morphCost(pathA, spin ? rotateAroundCenter(pathB, -spin) : pathB);
     console.log(`${state}->${otherState}`.padEnd(5),
-      'cost', morphCost(shapes[state], shapes[otherState]).toFixed(0).padStart(5), '->', morphCost(pathA, pathB).toFixed(0).padStart(5),
+      'cost', morphCost(shapes[state], shapes[otherState]).toFixed(0).padStart(5), '->', costAfter.toFixed(0).padStart(5),
+      spin ? `(spin ${spin}°)` : '',
       'length-ok', pathA.length === expectedLength && pathB.length === expectedLength,
       'continuous', isContinuous(pathA) && isContinuous(pathB),
       'shape-deviation', deviation.toFixed(3));

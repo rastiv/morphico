@@ -62,6 +62,10 @@ export interface IconSet {
   /** Cubic segments per shape. The state that needs the most segments decides it. */
   segmentCount: number;
   strokeWidth: number;
+  /** SVG `stroke-linecap`: flat (`butt`) or rounded line ends. */
+  lineCap: 'butt' | 'round' | 'square';
+  /** SVG `stroke-linejoin`: sharp (`miter`) or rounded corners. */
+  lineJoin: 'miter' | 'round' | 'bevel';
   /** The strokes of each state, as one continuous line in drawing order. */
   strokes: Record<string, Stroke[]>;
   /** Alternative tracings: the same picture (with round joins) drawn in a different order. */

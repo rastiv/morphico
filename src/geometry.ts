@@ -25,6 +25,21 @@ export const cubic = (
 export const pointOnCircle = (centerX: number, centerY: number, radius: number, angle: number): Point =>
   [centerX + radius * Math.cos(angle * DEGREE), centerY + radius * Math.sin(angle * DEGREE)];
 
+/** Control handle length of a quarter ellipse as a fraction of its radius (4/3 · (√2 − 1)). */
+const QUARTER_HANDLE = (4 / 3) * (Math.SQRT2 - 1);
+
+/** A full ellipse as four cubic quarters, drawn counter-clockwise on screen, starting at the top. */
+export const ellipse = (centerX: number, centerY: number, radiusX: number, radiusY: number): Stroke[] => {
+  const handleX = QUARTER_HANDLE * radiusX, handleY = QUARTER_HANDLE * radiusY;
+  const top = centerY - radiusY, bottom = centerY + radiusY, left = centerX - radiusX, right = centerX + radiusX;
+  return [
+    cubic(centerX, top, centerX - handleX, top, left, centerY - handleY, left, centerY),
+    cubic(left, centerY, left, centerY + handleY, centerX - handleX, bottom, centerX, bottom),
+    cubic(centerX, bottom, centerX + handleX, bottom, right, centerY + handleY, right, centerY),
+    cubic(right, centerY, right, centerY - handleY, centerX + handleX, top, centerX, top),
+  ];
+};
+
 const arcSweep = (stroke: ArcStroke): number => Math.abs(stroke.endAngle - stroke.startAngle);
 
 // ---- path numbers ⇄ segments ----

@@ -10,7 +10,6 @@ type EasingName = keyof typeof easings;
 
 const ICON_SETS: Record<string, IconSet> = { v1: digitsV1, v2: digitsV2, v3: digitsV3 };
 const DIGITS = [...'0123456789'];
-const REFERENCE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'];
 const PRESET_COLORS = ['#e8e8ea', '#7aa2ff', '#69db7c', '#ffd43b', '#ffa94d', '#ff6b6b', '#f783ac', '#9775fa'];
 const AUTO_PLAY_PAUSE = 700; // ms between two auto-play morphs
 
@@ -22,7 +21,6 @@ const elementById = <ElementType extends Element = HTMLElement>(id: string): Ele
 const morphPath = elementById<SVGPathElement>('morph-path');
 const debugLayer = elementById<SVGGElement>('debug-layer');
 const gridLayer = elementById<SVGGElement>('grid-layer');
-const referenceImage = elementById<SVGImageElement>('reference-image');
 const setButtons = elementById('set-buttons');
 const digitButtons = elementById('digit-buttons');
 const durationInput = elementById<HTMLInputElement>('duration');
@@ -33,12 +31,19 @@ const progressOutput = elementById<HTMLOutputElement>('progress-output');
 const colorSwatches = elementById('color-swatches');
 const colorInput = elementById<HTMLInputElement>('color');
 const colorOutput = elementById<HTMLOutputElement>('color-output');
-const referenceOpacityInput = elementById<HTMLInputElement>('reference-opacity');
-const referenceOutput = elementById<HTMLOutputElement>('reference-output');
 const autoPlayToggle = elementById<HTMLInputElement>('auto-play');
 const gridToggle = elementById<HTMLInputElement>('show-grid');
 const debugToggle = elementById<HTMLInputElement>('show-debug');
 const pathOutput = elementById<HTMLPreElement>('path-output');
+const textLine = elementById('text-line');
+const textInput = elementById<HTMLInputElement>('text-input');
+const cellWidthInput = elementById<HTMLInputElement>('cell-width');
+const cellWidthOutput = elementById<HTMLOutputElement>('cell-width-output');
+const spacingInput = elementById<HTMLInputElement>('spacing');
+const spacingOutput = elementById<HTMLOutputElement>('spacing-output');
+const textSizeInput = elementById<HTMLInputElement>('text-size');
+const textSizeOutput = elementById<HTMLOutputElement>('text-size-output');
+const liveClockToggle = elementById<HTMLInputElement>('live-clock');
 
 // localStorage can be unavailable (private mode, blocked storage): settings are then simply not remembered
 const settings = {
@@ -67,9 +72,9 @@ const stopRunningAnimation = (): void => {
   stopAnimation = null;
 };
 
-/** Blends towards the target in the start's frame while turning that frame by spinAngle · progress. */
-const blend = (from: PathNumbers, to: PathNumbers, progress: number): PathNumbers => (spinAngle
-  ? rotateAroundCenter(interpolate(from, rotateAroundCenter(to, -spinAngle), progress), spinAngle * progress)
+/** Blends towards the target in the start's frame while turning that frame by spin · progress. */
+const blend = (from: PathNumbers, to: PathNumbers, progress: number, spin: number): PathNumbers => (spin
+  ? rotateAroundCenter(interpolate(from, rotateAroundCenter(to, -spin), progress), spin * progress)
   : interpolate(from, to, progress));
 
 function render(path: PathNumbers | null): void {
@@ -77,7 +82,7 @@ function render(path: PathNumbers | null): void {
   if (!path) {
     morphPath.removeAttribute('d');
     debugLayer.replaceChildren();
-    pathOutput.textContent = `${iconSetName} / ${targetDigit}: not drawn yet — reference image: icons/${iconSetName}/${targetDigit}.png`;
+    pathOutput.textContent = `${iconSetName} / ${targetDigit}: not drawn yet`;
     return;
   }
   const pathData = toPathData(path);
@@ -105,37 +110,6 @@ gridLayer.innerHTML = Array.from({ length: 25 }, (_, position) => {
   return `<path d="M${position} 0V24M0 ${position}H24" stroke-width="${lineWidth}"/>`;
 }).join('');
 
-// reference image icons/<set>/<digit>.<png|jpg|jpeg|webp>: the first one that exists
-const referenceUrls = new Map<string, Promise<string>>();
-const imageLoads = (url: string): Promise<boolean> => new Promise((resolve) => {
-  const image = new Image();
-  image.onload = () => resolve(true);
-  image.onerror = () => resolve(false);
-  image.src = url;
-});
-const findReferenceUrl = (setName: string, digit: string): Promise<string> => {
-  const key = `${setName}/${digit}`;
-  let found = referenceUrls.get(key);
-  if (!found) {
-    found = (async () => {
-      for (const extension of REFERENCE_EXTENSIONS) {
-        const url = `icons/${key}.${extension}`;
-        if (await imageLoads(url)) return url;
-      }
-      return '';
-    })();
-    referenceUrls.set(key, found);
-  }
-  return found;
-};
-async function showReference(): Promise<void> {
-  const setName = iconSetName, digit = targetDigit;
-  const url = await findReferenceUrl(setName, digit);
-  if (setName !== iconSetName || digit !== targetDigit) return; // switched meanwhile
-  if (url) referenceImage.setAttribute('href', url);
-  else referenceImage.removeAttribute('href');
-}
-
 function showProgress(progress: number): void {
   progressInput.value = String(progress);
   progressOutput.textContent = progress.toFixed(2);
@@ -147,7 +121,6 @@ function goTo(digit: string): void {
   for (const button of digitButtons.querySelectorAll<HTMLButtonElement>('button')) {
     button.classList.toggle('active', button.dataset.digit === digit);
   }
-  void showReference();
   stopRunningAnimation();
   if (!shapes[digit] || !currentPath) { // nothing to morph from or to: jump
     morphFrom = morphTo = shapes[digit] ?? null;
@@ -168,7 +141,7 @@ function goTo(digit: string): void {
   stopAnimation = animate((frameTime) => {
     const progress = Math.min(Math.max((frameTime - startTime) / duration, 0), 1);
     showProgress(progress);
-    render(blend(from, to, easing(progress)));
+    render(blend(from, to, easing(progress), spinAngle));
     if (progress >= 1) settled = true;
     return progress < 1;
   });
@@ -200,6 +173,8 @@ function selectIconSet(setName: string): void {
     pathOutput.innerHTML = `<span class="error">${setName}: ${(error as Error).message}</span>`;
   }
   morphPath.setAttribute('stroke-width', String(iconSet.strokeWidth));
+  morphPath.setAttribute('stroke-linecap', iconSet.lineCap);
+  morphPath.setAttribute('stroke-linejoin', iconSet.lineJoin);
 
   digitButtons.replaceChildren();
   for (const digit of DIGITS) {
@@ -209,7 +184,7 @@ function selectIconSet(setName: string): void {
     button.title = shape ? `Morph to ${digit}` : `${digit}: not drawn yet`;
     button.classList.toggle('not-drawn', !shape);
     button.innerHTML = shape
-      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${iconSet.strokeWidth * 1.5}" stroke-linecap="round" stroke-linejoin="round"><path d="${toPathData(shape)}"/></svg>`
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${iconSet.strokeWidth}" stroke-linecap="${iconSet.lineCap}" stroke-linejoin="${iconSet.lineJoin}"><path d="${toPathData(shape)}"/></svg>`
       : digit;
     button.onclick = () => {
       autoPlayToggle.checked = false;
@@ -221,6 +196,7 @@ function selectIconSet(setName: string): void {
   currentPath = null;
   goTo('0');
   showProgress(1);
+  buildTextLine();
 }
 
 function setColor(color: string): void {
@@ -234,17 +210,153 @@ function setColor(color: string): void {
   settings.write('color', normalized);
 }
 
-function setReferenceOpacity(opacity: number): void {
-  referenceOpacityInput.value = String(opacity);
-  referenceImage.setAttribute('opacity', String(opacity));
-  referenceOutput.textContent = `${Math.round(opacity * 100)}%`;
-  settings.write('reference-opacity', String(opacity));
-}
-
 function showGrid(on: boolean): void {
   gridToggle.checked = on;
   document.body.classList.toggle('show-grid', on);
   settings.write('grid', on ? '1' : '');
+}
+
+// ---- text preview: a line of characters in narrow cells; changed digits morph ----
+
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+/** Vertical part of the 24×24 grid shown in a text cell: y 3…21 covers every digit incl. stroke and corners. */
+const CELL_TOP = 3;
+const CELL_HEIGHT = 18;
+/** Width of the `:` cell; its dots sit at the centres of the 8's two circles. */
+const COLON_WIDTH = 5;
+const COLON_DOT_Y = [7.6, 15.6];
+const isDigit = (character: string) => character >= '0' && character <= '9';
+
+interface TextSlot {
+  character: string;
+  svg: SVGSVGElement;
+  path: SVGPathElement | null;
+  currentPath: PathNumbers | null;
+  settled: boolean;
+  stopAnimation: (() => void) | null;
+}
+let textSlots: TextSlot[] = [];
+let liveClockTimer = 0;
+
+const cellWidthOf = (character: string): number => {
+  const cellWidth = Number(cellWidthInput.value);
+  if (isDigit(character)) return cellWidth;
+  return character === ':' ? COLON_WIDTH : cellWidth / 2;
+};
+
+function createSlot(character: string): TextSlot {
+  const svg = document.createElementNS(SVG_NAMESPACE, 'svg');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', String(iconSet.strokeWidth));
+  svg.setAttribute('stroke-linecap', iconSet.lineCap);
+  svg.setAttribute('stroke-linejoin', iconSet.lineJoin);
+  svg.setAttribute('aria-hidden', 'true');
+  const slot: TextSlot = { character, svg, path: null, currentPath: null, settled: true, stopAnimation: null };
+  if (character === ':') {
+    for (const dotY of COLON_DOT_Y) {
+      const dot = document.createElementNS(SVG_NAMESPACE, 'circle');
+      dot.setAttribute('cx', '12');
+      dot.setAttribute('cy', String(dotY));
+      dot.setAttribute('r', String(iconSet.strokeWidth * 0.6));
+      dot.setAttribute('fill', 'currentColor');
+      dot.setAttribute('stroke', 'none');
+      svg.appendChild(dot);
+    }
+  } else if (isDigit(character)) {
+    slot.path = document.createElementNS(SVG_NAMESPACE, 'path');
+    svg.appendChild(slot.path);
+    setSlotPath(slot, shapes[character] ?? null);
+  }
+  return slot;
+}
+
+function setSlotPath(slot: TextSlot, path: PathNumbers | null): void {
+  slot.currentPath = path;
+  if (!slot.path) return;
+  if (path) slot.path.setAttribute('d', toPathData(path));
+  else slot.path.removeAttribute('d');
+}
+
+/** Size and frame of every cell (called when a slider moves). */
+function layoutTextLine(): void {
+  const textSize = Number(textSizeInput.value);
+  const pixelsPerUnit = textSize / CELL_HEIGHT;
+  const spacing = Number(spacingInput.value) * pixelsPerUnit;
+  textSlots.forEach((slot, index) => {
+    const width = cellWidthOf(slot.character);
+    slot.svg.setAttribute('viewBox', `${12 - width / 2} ${CELL_TOP} ${width} ${CELL_HEIGHT}`);
+    slot.svg.setAttribute('width', String(width * pixelsPerUnit));
+    slot.svg.setAttribute('height', String(textSize));
+    slot.svg.style.marginLeft = index === 0 ? '0' : `${spacing}px`;
+  });
+  cellWidthOutput.textContent = cellWidthInput.value;
+  spacingOutput.textContent = spacingInput.value;
+  textSizeOutput.textContent = `${textSize}px`;
+}
+
+/** Builds the line from scratch, without animation (new set, or the text length changed). */
+function buildTextLine(): void {
+  for (const slot of textSlots) slot.stopAnimation?.();
+  textSlots = [...textInput.value].map(createSlot);
+  textLine.replaceChildren(...textSlots.map((slot) => slot.svg));
+  textLine.setAttribute('aria-label', textInput.value);
+  layoutTextLine();
+}
+
+function morphSlot(slot: TextSlot, nextDigit: string): void {
+  const previousDigit = slot.character;
+  slot.character = nextDigit;
+  slot.stopAnimation?.();
+  slot.stopAnimation = null;
+  if (!shapes[nextDigit] || !slot.currentPath) {
+    slot.settled = true;
+    setSlotPath(slot, shapes[nextDigit] ?? null);
+    return;
+  }
+  const from = slot.settled ? shapeForPair(iconSet, shapes, previousDigit, nextDigit) : slot.currentPath;
+  const to = shapeForPair(iconSet, shapes, nextDigit, previousDigit);
+  const spin = (slot.settled && iconSet.spins[previousDigit]?.[nextDigit]) || 0;
+  slot.settled = false;
+  const duration = Number(durationInput.value);
+  const easing = easings[easingSelect.value as EasingName];
+  const startTime = performance.now();
+  slot.stopAnimation = animate((frameTime) => {
+    const progress = Math.min(Math.max((frameTime - startTime) / duration, 0), 1);
+    setSlotPath(slot, blend(from, to, easing(progress), spin));
+    if (progress >= 1) slot.settled = true;
+    return progress < 1;
+  });
+}
+
+/** Morphs only the digits that changed; anything else (other length, digit ↔ non-digit) is rebuilt. */
+function updateTextLine(text: string): void {
+  const characters = [...text];
+  const sameShape = characters.length === textSlots.length
+    && characters.every((character, index) => isDigit(character) === isDigit(textSlots[index].character)
+      && (isDigit(character) || character === textSlots[index].character));
+  if (!sameShape) {
+    buildTextLine();
+    return;
+  }
+  characters.forEach((character, index) => {
+    if (character !== textSlots[index].character) morphSlot(textSlots[index], character);
+  });
+  textLine.setAttribute('aria-label', text);
+}
+
+const twoDigits = (value: number) => String(value).padStart(2, '0');
+function setLiveClock(on: boolean): void {
+  clearInterval(liveClockTimer);
+  liveClockToggle.checked = on;
+  if (!on) return;
+  const showTime = () => {
+    const now = new Date();
+    textInput.value = `${twoDigits(now.getHours())}:${twoDigits(now.getMinutes())}:${twoDigits(now.getSeconds())}`;
+    updateTextLine(textInput.value);
+  };
+  showTime();
+  liveClockTimer = setInterval(showTime, 1000);
 }
 
 // ---- wiring ----
@@ -271,9 +383,6 @@ for (const color of PRESET_COLORS) {
 colorInput.oninput = () => setColor(colorInput.value);
 setColor(settings.read('color') ?? PRESET_COLORS[0]);
 
-referenceOpacityInput.oninput = () => setReferenceOpacity(Number(referenceOpacityInput.value));
-setReferenceOpacity(Number(settings.read('reference-opacity') ?? 0.3));
-
 durationInput.oninput = () => {
   durationOutput.textContent = `${durationInput.value}ms`;
   if (autoPlayToggle.checked) setAutoPlay(true);
@@ -282,7 +391,7 @@ progressInput.oninput = () => {
   stopRunningAnimation();
   const progress = Number(progressInput.value);
   progressOutput.textContent = progress.toFixed(2);
-  if (morphFrom && morphTo) render(blend(morphFrom, morphTo, easings[easingSelect.value as EasingName](progress)));
+  if (morphFrom && morphTo) render(blend(morphFrom, morphTo, easings[easingSelect.value as EasingName](progress), spinAngle));
 };
 autoPlayToggle.onchange = () => setAutoPlay(autoPlayToggle.checked);
 gridToggle.onchange = () => showGrid(gridToggle.checked);
@@ -291,6 +400,23 @@ debugToggle.onchange = () => {
   document.body.classList.toggle('debugging', debugToggle.checked);
   render(currentPath);
 };
+
+textInput.value = settings.read('text') ?? textInput.value;
+cellWidthInput.value = settings.read('cell-width') ?? cellWidthInput.value;
+spacingInput.value = settings.read('spacing') ?? spacingInput.value;
+textSizeInput.value = settings.read('text-size') ?? textSizeInput.value;
+textInput.oninput = () => {
+  setLiveClock(false);
+  settings.write('text', textInput.value);
+  updateTextLine(textInput.value);
+};
+for (const [input, key] of [[cellWidthInput, 'cell-width'], [spacingInput, 'spacing'], [textSizeInput, 'text-size']] as const) {
+  input.oninput = () => {
+    settings.write(key, input.value);
+    layoutTextLine();
+  };
+}
+liveClockToggle.onchange = () => setLiveClock(liveClockToggle.checked);
 
 const rememberedSet = settings.read('set');
 selectIconSet(rememberedSet && rememberedSet in ICON_SETS ? rememberedSet : 'v1');

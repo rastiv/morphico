@@ -17,9 +17,9 @@ Public library (MIT, npm + jsDelivr), **written in TypeScript**, of morphing lin
   - `types.ts` — `Point`, `CubicSegment`, `PathNumbers`, `Stroke` (line/arc/cubic), `PairLayout`, `IconSet` — the set format is documented here.
   - `geometry.ts` — stroke helpers `line`, `arc`, `cubic`, `pointOnCircle`; `strokePiece`, `layoutStrokes`, `defaultBreakpoints`, `reorderSegments`, `rotateAroundCenter`, `toPathData`, `defaultShapes(iconSet)`, `shapeForPair(iconSet, shapes, state, otherState)`.
   - `engine.ts` — `easings` + one shared rAF loop (`animate(onFrame)`, idle when nothing moves).
-  - `sets/v1.ts`, `v2.ts`, `v3.ts` — digit sets (`IconSet`). Currently empty: being redrawn from scratch.
-- `icons/v1|v2|v3/<digit>.png` (or jpg/jpeg/webp) — the user's **reference images**. Claude drafts `strokes` from them. Not shipped.
-- `index.html` + `preview/main.ts` — preview page (keep it and extend it with new features): set selector (from `ICON_SETS`), digit buttons (dashed = not drawn yet), duration, easing, progress slider, color, **reference image opacity**, auto-play, **grid**, debug overlay (segments in colors, control points, start point).
+  - `sets/v1.ts`, `v2.ts`, `v3.ts` — digit sets (`IconSet`). v1 drawn (see Status), v2/v3 empty (waiting for reference images).
+- `icons/v1|v2|v3/<digit>.png` (or jpg/jpeg/webp) — the user's **reference images**. Claude measures them (fits lines/arcs to the ink with a scratch script) and drafts `strokes` from them. Not shipped.
+- `index.html` + `preview/main.ts` — preview page (keep it and extend it with new features): set selector (from `ICON_SETS`), digit buttons (dashed = not drawn yet), duration, easing, progress slider, color, auto-play, **grid** (no reference-image overlay: the user found it distracting), debug overlay (segments in colors, control points, start point).
 - `tools/` (not published, run directly by Node: `node tools/<name>.ts`):
   - `serve.ts` — `npm run dev` → http://localhost:3003 (`PORT` env to change). Serves `.ts` as JavaScript by stripping types (`node:module` `stripTypeScriptTypes`, prints an "experimental" warning — harmless).
   - `build.ts` — `npm run build`: `tsc -p tsconfig.build.json` → `.build/`, then joins the JS into `dist/morphico.mjs` (ESM) + `dist/morphico.js` (IIFE, global `morphico`), copies declarations to `dist/types/` (rewriting `.ts` → `.js` import paths), smoke-tests both. Joining rules: one-line relative imports, unique top-level names across files, entry exports only via `export const|let|function|class`. Sets will be built later with path data precomputed (one file per set).
@@ -44,14 +44,23 @@ Within a set every state's path is `M x y` + **exactly `segmentCount` cubic segm
 - Hard pairs: shapes whose arcs open on opposite sides (2→6, 3→6); digits that use every segment leave no room for re-layout. More segments = more freedom (8 was limiting; 12–16 worked better).
 - Workflow: user rates transitions (Good / Midd / Bad) → `tools/check.ts` for non-Good pairs → add `pairLayouts` entries (leave Good pairs untouched) → `tools/verify.ts` → user re-checks. Look for symmetries first. Run `check.ts` with the closed shape second (only the second gets start segments). Alternative tracings aren't searched automatically.
 
+## Status: v1 (2026-10-25)
+- Geometric sans digits fitted from `icons/v1/*.png`: 12 segments, stroke 1.6, round ends + round corners (user choice; open ends pulled in by half a stroke so the outline matches the flat-ended images). Shared geometry: big circle r 4.4 (2, 3, 6, 8, 9), small r 3.6 (top of 3 and 8, touching at 12,11.2), 3 = right half of 8's circles, 9 = 6 turned 180°, 2's bowl = 9's circle, 0 = ellipse 5.05 × 8.
+- Tuned pairs (`pairLayouts`, alternative tracings `8-like-0`, `8-two-loops`, `8-mirrored`, `8-from-right`, `6-clockwise`): 0→1…5, 0→7, 0→8, 0→9 (user's start points), 3→8, 4→8, 5→6, 5→8, 5→9 (user's arrows), 2→4, 3→4, 3→6, 4→5, 4→6, 4→7, 6→7 (optimizer). Spins: 6↔9 (pure, cost 0), 8↔9, 2↔6.
+- Confirmed good by the user: 6→7. Others are waiting for the user's visual check.
+- Not tuned yet (default pairing): 0→6, 1→2…9, 2→3, 2→5, 2→7, 2→8, 2→9, 3→5, 3→7, 3→9, 5→7, 6→8, 7→8, 7→9. Idea: 2→9 can use the 2 ↔ 9 fit (cost ~249) without spinning.
+- Decided: round ends/corners; 0 and 8 equal height (both y 4…20); text cell width 10, spacing 4.
+
 ## Library plan (agreed 2026-10-25)
 - **API:** Layer 1 `icon(el, opts)` → `.to(state)`; Layer 2 `text(el, opts)` → `.set('04:59')` (only changed digits morph, separators static, "empty" digit state); Layer 3 `countdown()` maybe later as a separate file. No custom elements. `destroy()` for frameworks. `to()`/`set()` return a Promise **and** accept `onEnd`; interrupted morphs resolve (e.g. `{ interrupted: true }`), never hang.
+- **Text cells (agreed 2026-10-25):** characters reuse the same 24×24 path data; only the `viewBox` is narrowed to a cell (`viewBox="12-w/2 3 w 18"`, svg width = w·size/18, so no squashing). `text()` options: `cellWidth` (default from the set, v1 = 10 with spacing 4 — chosen by the user), `spacing` (also via CSS variable e.g. `--morphico-spacing`), colon cell ≈ 5 with dots at the 8's circle centres (y 7.6 / 15.6). Later maybe `figures: 'tabular' | 'proportional'` (tabular default — clocks must not jiggle). The preview page has a text line to try this.
 - **Requirements:** CSS inheritance (`currentColor`, em sizing); accessibility (`prefers-reduced-motion` → jump, `aria-label` kept in sync); SSR-safe; size budget 5–10 KB gzipped; one shared rAF loop.
 - **Semver:** patch = nicer transitions/fixes, minor = new sets/options, major = API change or changed resting look of an icon. Keep `CHANGELOG.md` updated.
 - **Git:** work on `main` until 1.0.0; after that branch → PR → merge. The demo site is a separate React/TS repo using the published package.
 
-## Release pipeline test (in progress)
-1. ✅ Skeleton, `package.json` 0.0.1 (npm name `morphico` was free on 2026-10-25).
-2. ✅ GitHub repo https://github.com/rastiv/morphico (public), `repository` in package.json (needed for provenance), LICENSE holder Raycho Ivanov.
-3. First publish 0.0.1 — Trusted Publishing can only be configured on an existing package: either via CI with a short-lived granular `NPM_TOKEN` secret (push tag `v0.0.1`), or once by hand (`npm login`, `npm publish`). Then set up Trusted Publishing on npmjs.com (user `rastiv`, repo `morphico`, workflow `publish.yml`) and delete the token + secret.
-4. Bump to 0.0.2, push tag `v0.0.2` → Actions publishes via OIDC → check `https://cdn.jsdelivr.net/npm/morphico@0.0.2/`.
+## Release pipeline (working since 2026-10-25)
+- Repo https://github.com/rastiv/morphico (public, SSH remote). npm package `morphico`, owner `rastiv`.
+- 0.0.1: first publish via CI with a one-time granular token (npm first creates a placeholder `0.0.0-stage` for new packages — harmless, it stays in the version list). 0.0.2: published via Trusted Publishing (OIDC), with provenance. The token secret is deleted from GitHub.
+- Trusted Publisher on npmjs.com: GitHub Actions, `rastiv/morphico`, `publish.yml`, "Allow npm publish" ticked (direct publish, no staging approval). Nothing to renew (no stored secret; validated connections don't expire). It breaks only if the repo is renamed/moved or `publish.yml` is renamed → then update the Trusted Publisher on npmjs.com to match.
+- **How to release:** bump `version` in package.json (`npm version X.Y.Z --no-git-tag-version`), add a CHANGELOG entry, commit + push, wait for CI, then `git tag -a vX.Y.Z -m ...` + `git push origin vX.Y.Z`. jsDelivr may cache a "not found" if checked before publish → `https://purge.jsdelivr.net/npm/morphico@X.Y.Z/<file>`.
+- The user is new to CI/CD and npm security: go one step at a time, explain before acting.

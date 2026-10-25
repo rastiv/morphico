@@ -18,7 +18,7 @@
   .debugging #debug-layer { display: inline; }
   .debugging #morph-path { stroke: transparent; }
   .digits { display: flex; gap: 6px; }
-  .digits button { width: 40px; height: 40px; padding: 4px; border: 1px solid #2c2c36; border-radius: 8px; background: var(--panel); color: var(--dim); font: 18px system-ui, sans-serif; cursor: pointer; }
+  .digits button { width: 40px; height: 40px; padding: 7px; border: 1px solid #2c2c36; border-radius: 8px; background: var(--panel); color: var(--dim); font: 18px system-ui, sans-serif; cursor: pointer; }
   .digits button.active { border-color: var(--accent); color: var(--fg); }
   .digits button.not-drawn { border-style: dashed; }
   .digits svg { width: 100%; height: 100%; }
@@ -33,6 +33,10 @@
   .colors button.active { border-color: var(--fg); box-shadow: 0 0 0 2px var(--bg) inset; }
   .colors input[type=color] { width: 30px; height: 24px; padding: 0; border: 1px solid #2c2c36; border-radius: 6px; background: var(--panel); cursor: pointer; }
   .toggles { display: flex; gap: 16px; }
+  .text-preview { display: grid; gap: 14px; justify-items: center; padding: 20px 24px; background: var(--panel); border-radius: 16px; }
+  .text-line { display: flex; align-items: center; min-height: 40px; color: var(--stroke); }
+  .text-line svg { flex: none; overflow: visible; }
+  .controls input[type=text] { width: 100%; padding: 4px 8px; border: 1px solid #2c2c36; border-radius: 6px; background: var(--bg); color: var(--fg); font: 16px ui-monospace, monospace; }
   pre { width: 560px; max-width: 90vw; margin: 0; padding: 12px; background: var(--panel); border-radius: 8px; color: var(--dim); font-size: 11px; white-space: pre-wrap; word-break: break-all; }
   .error { color: #ff7a7a; }
 </style>
@@ -41,7 +45,6 @@
 <main>
   <div class="stage">
     <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
-      <image id="reference-image" x="0" y="0" width="24" height="24"/>
       <g id="grid-layer"></g>
       <path id="morph-path" stroke-width="1"/>
       <g id="debug-layer"></g>
@@ -70,10 +73,6 @@
       <input id="color" type="color" value="#e8e8ea" title="Custom color">
     </div>
     <output id="color-output">#e8e8ea</output>
-
-    <label for="reference-opacity">Reference</label>
-    <input id="reference-opacity" type="range" min="0" max="1" step="0.05" value="0.3">
-    <output id="reference-output">30%</output>
   </div>
 
   <div class="toggles">
@@ -81,6 +80,28 @@
     <label><input id="show-grid" type="checkbox"> Grid</label>
     <label><input id="show-debug" type="checkbox"> Show segments &amp; control points</label>
   </div>
+
+  <section class="text-preview" aria-label="Text preview">
+    <div class="text-line" id="text-line"></div>
+    <div class="controls">
+      <label for="text-input">Text</label>
+      <input id="text-input" type="text" value="12:09:02" maxlength="16" spellcheck="false">
+      <span></span>
+
+      <label for="cell-width">Cell width</label>
+      <input id="cell-width" type="range" min="8" max="24" step="0.5" value="10">
+      <output id="cell-width-output">10</output>
+
+      <label for="spacing">Spacing</label>
+      <input id="spacing" type="range" min="-3" max="6" step="0.25" value="4">
+      <output id="spacing-output">4</output>
+
+      <label for="text-size">Size</label>
+      <input id="text-size" type="range" min="24" max="160" step="4" value="72">
+      <output id="text-size-output">72px</output>
+    </div>
+    <label><input id="live-clock" type="checkbox"> Live clock</label>
+  </section>
 
   <pre id="path-output"></pre>
 </main>
