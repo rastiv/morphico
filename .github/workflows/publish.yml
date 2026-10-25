@@ -1,5 +1,7 @@
-# Publishes to npm when a version tag (v1.2.3) is pushed.
-# Uses npm Trusted Publishing (OIDC): no token secret; the package's npm settings must list this repo + workflow.
+# Publishes to npm when a version tag (v1.2.3) is pushed — only after the CI checks pass.
+# Authentication: npm Trusted Publishing (OIDC, no secret; set up in the package's settings on npmjs.com).
+# The NPM_TOKEN secret is only for the very first publish, before Trusted Publishing can be set up;
+# delete the secret afterwards — npm then uses OIDC.
 name: Publish
 
 on:
@@ -8,14 +10,21 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
   publish:
+    name: Publish to npm
+    needs: checks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
@@ -24,3 +33,5 @@ jobs:
       - run: npm ci
       # npm publish runs the prepublishOnly script first: typecheck + build
       - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

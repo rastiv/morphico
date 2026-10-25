@@ -5,7 +5,7 @@ Public library (MIT, npm + jsDelivr), **written in TypeScript**, of morphing lin
 ## Hard rules
 - **TypeScript everywhere** (library, preview page, tools). Only erasable syntax (`erasableSyntaxOnly`: no enums, namespaces, parameter properties) so Node and the dev server can strip types. Type-only imports as `import type`; relative imports with the `.ts` extension.
 - **Descriptive names.** No cryptic short names (`lerp2`, `d`, `a`, `n`, `u`, `k`…): name what the thing is (`interpolatePoint`, `digit`, `path`, `breakpoints`, `startSegment`). Minification happens at build/CDN time.
-- **No runtime dependencies.** The published package depends on nothing. Dev dependencies allowed: **only** `typescript` and `@types/node` (agreed 2026-10-25). No bundlers, no other tools (not even `npx serve`).
+- **No runtime dependencies.** The published package depends on nothing. Dev dependencies allowed: **only** `typescript` and `@types/node` (agreed 2026-10-25). No linter (Biome was tried and rejected as unneeded complexity), no bundlers, no other tools (not even `npx serve`).
 - Python is **not** installed on this machine; Node v24 is.
 - **No SVG files as source.** Source of truth = TS geometry (`strokes`) + tuning (`pairLayouts`, `spins`, `alternativeStrokes`) in `src/sets/`.
 - **Icon licenses:** only own drawings or MIT/ISC sources (Lucide + Feather approved: one credit line in the JS header + Lucide LICENSE text). No CC BY sources.
@@ -27,7 +27,8 @@ Public library (MIT, npm + jsDelivr), **written in TypeScript**, of morphing lin
   - `verify.ts` — `node tools/verify.ts <set> [states]` (default all pairs): number count, continuity, shape deviation vs. the default layout (≤ ~0.12 is sampling noise), cost before/after.
   - `shared.ts` — `loadIconSet`, `morphCost`.
 - `tsconfig.json` (src + preview, DOM, no Node types) · `tools/tsconfig.json` (extends it, Node types) · `tsconfig.build.json` (emit for the build). `npm run typecheck` checks both.
-- `.github/workflows/publish.yml` — on tag `v*`: check tag = package.json version, `npm ci`, `npm publish` (its `prepublishOnly` runs typecheck + build) via npm Trusted Publishing (OIDC, no token).
+- `.github/workflows/ci.yml` — on push to `main` and on pull requests: `npm ci` → typecheck → build.
+- `.github/workflows/publish.yml` — on tag `v*`: runs `ci.yml` first, then checks tag = package.json version, `npm publish` (its `prepublishOnly` runs typecheck + build) via npm Trusted Publishing (OIDC). `NPM_TOKEN` secret only for the very first publish, deleted afterwards.
 - `package.json` — `"type": "module"`, exports `dist/morphico.mjs` + `dist/types/index.d.ts`, `jsdelivr`/`unpkg` → `dist/morphico.js`, `files: ["dist"]`. `dist/` and `.build/` are git-ignored.
 
 ## The morphing contract
@@ -52,5 +53,5 @@ Within a set every state's path is `M x y` + **exactly `segmentCount` cubic segm
 ## Release pipeline test (in progress)
 1. ✅ Skeleton, `package.json` 0.0.1 (npm name `morphico` was free on 2026-10-25).
 2. ✅ GitHub repo https://github.com/rastiv/morphico (public), `repository` in package.json (needed for provenance), LICENSE holder Raycho Ivanov.
-3. User publishes 0.0.1 by hand (`npm publish`), then sets up Trusted Publishing on npmjs.com (repo + `publish.yml`).
-4. Bump to 0.0.2, push tag `v0.0.2` → Actions publishes → check `https://cdn.jsdelivr.net/npm/morphico@0.0.2/`.
+3. First publish 0.0.1 — Trusted Publishing can only be configured on an existing package: either via CI with a short-lived granular `NPM_TOKEN` secret (push tag `v0.0.1`), or once by hand (`npm login`, `npm publish`). Then set up Trusted Publishing on npmjs.com (user `rastiv`, repo `morphico`, workflow `publish.yml`) and delete the token + secret.
+4. Bump to 0.0.2, push tag `v0.0.2` → Actions publishes via OIDC → check `https://cdn.jsdelivr.net/npm/morphico@0.0.2/`.
