@@ -11,7 +11,7 @@
 import { arc, ellipse, line, pointOnCircle } from '../geometry.ts';
 import type { IconSet, Point } from '../types.ts';
 
-const STROKE_WIDTH = 1.6;
+const STROKE_WIDTH = 1.2; // the reference images use 1.6; thinner by the user's choice
 /** A round line end reaches this far beyond its end point. */
 const END_INSET = STROKE_WIDTH / 2;
 /** Angle that shortens an arc's end by END_INSET along the circle. */
@@ -120,17 +120,32 @@ const digitsV1: IconSet = {
       // start at the bottom and go clockwise, the same way round as the 9's circle
       9: { startSegment: 6, reversed: true },
     },
+    1: {
+      4: { breakpoints: [0, 1, 1.0625, 1.125, 1.1875, 1.2708, 1.2708, 1.6875, 1.6875, 1.6875, 1.6875, 1.6875, 2] },
+      // flag curls into the top loop, stem rounds into the bottom loop (optimizer fit)
+      8: { breakpoints: [0, 0, 0, 1, 1.3125, 1.4583, 1.5208, 1.8333, 1.8333, 1.8333, 1.8333, 1.8333, 2] },
+      // fewer segments for the 9's circle, more for its tail; the circle unrolls into flag + stem top (optimizer fit)
+      9: { breakpoints: [0, 0, 0, 1, 1.1042, 1.4167, 1.4792, 1.5625, 1.625, 1.6875, 1.7708, 1.8125, 2] },
+    },
     2: {
       // the 4's crossbar shrinks into the 2's starting tip, the diagonal and stem bend into the bowl (optimizer fit)
       4: { breakpoints: [0, 0, 0.3542, 0.6875, 0.7708, 1, 1.2083, 1.2292, 2, 2.7292, 2.7292, 2.7292, 3] },
+      // bowl → the 5's bar and down-stroke, diagonal + base → its bowl (optimizer fit)
+      5: { breakpoints: [0, 0.375, 0.375, 0.375, 0.625, 1, 1.0833, 1.0833, 1.1458, 1.4375, 1.7083, 2, 3] },
+      // the bowl closes into the 9's circle (same circle), the base pulls back into the tail (optimizer fit)
+      9: { breakpoints: [0, 0, 0, 0, 0.2083, 0.3958, 0.5833, 0.7708, 1, 1.2083, 1.3542, 2, 3] },
       // 2 → 6 spins (see spins): in the turning frame it is 2 → 9 — the 2's bowl is exactly the 9's circle
       6: { breakpoints: [0, 0, 0, 0, 0.2292, 0.4167, 0.6042, 0.7708, 1, 1.2083, 1.4167, 2, 3] },
     },
     3: {
       // the 4's crossbar shrinks into the 3's starting tip, the diagonal becomes the top arc (optimizer fit)
       4: { breakpoints: [0, 0, 0.3333, 0.6042, 0.7917, 1, 2, 2.1458, 2.3333, 2.5208, 2.5208, 2.6667, 3] },
+      // the small top arc grows into the 9's circle, the lower bowl straightens into the tail (optimizer fit)
+      9: { breakpoints: [0, 0, 0, 0, 0.0208, 0.2708, 0.4792, 0.6458, 1, 2, 2.3542, 2.6667, 3] },
     },
     4: {
+      // drawn from the stem's bottom: the 1's stem stays a stem, its flag folds out into diagonal + crossbar
+      1: { breakpoints: [0, 0.4375, 0.4375, 0.4375, 0.4375, 1, 1.6042, 1.6042, 1.7292, 1.8333, 1.8958, 2, 3], reversed: true },
       2: { breakpoints: [0, 1, 2, 2, 2.1458, 2.3958, 2.5208, 2.6667, 2.8125, 2.9375, 2.9375, 2.9375, 3] },
       3: { breakpoints: [0, 1, 2, 2.0208, 2.2708, 2.3958, 2.3958, 2.4792, 2.6875, 2.9167, 2.9167, 2.9167, 3] },
       // crossbar → top bar (moves up), diagonal → down-stroke, stem → bowl (optimizer fit)
@@ -144,11 +159,20 @@ const digitsV1: IconSet = {
     },
     5: {
       0: { breakpoints: [0, 1, 1, 2, 2.2708, 2.3125, 2.4792, 2.625, 2.75, 2.8542, 3, 3, 3] },
+      2: { breakpoints: [0, 1, 1, 1, 2, 2.2917, 2.2917, 2.2917, 2.2917, 2.5417, 2.8542, 2.8542, 3] },
       4: { breakpoints: [0, 1, 2, 2, 2, 2.0833, 2.1458, 2.1667, 2.1875, 2.25, 2.3958, 2.6875, 3] },
+      // bar stays the bar, down-stroke + bowl straighten into the 7's diagonal (optimizer fit)
+      7: { breakpoints: [0, 0.5625, 0.5625, 0.5625, 0.5625, 0.5625, 1, 2, 2.2083, 2.5208, 2.8333, 2.9167, 3] },
       // start of the 5 (bar end) moves down to the 9's start; segments re-spread on both (optimizer fit)
       9: { breakpoints: [0, 1, 2, 2, 2.0208, 2.1042, 2.1667, 2.2292, 2.2708, 2.3125, 2.5625, 2.75, 3] },
     },
     6: {
+      // the 1's flag shrinks into the top of the tail, its stem tilts into the tail and curls into the circle
+      // (optimizer fit, like 7 → 6)
+      1: {
+        tracing: '6-clockwise',
+        breakpoints: [0, 0.1042, 0.1042, 0.1667, 0.3125, 0.3125, 1, 1.25, 1.25, 1.3542, 1.5, 1.75, 2],
+      },
       // turned by 180° this is the 9 laid out for the 2 (optimizer fit for 2 ↔ 9, mirrored onto the 6)
       2: { breakpoints: [0, 0.1042, 0.5417, 0.75, 1, 1.125, 1.25, 1.375, 1.5, 1.6458, 1.6458, 1.75, 2], reversed: true },
       4: { breakpoints: [0, 0.3958, 0.4792, 0.75, 1, 1.0625, 1.1458, 1.3958, 1.625, 1.625, 1.625, 1.75, 2] },
@@ -170,9 +194,11 @@ const digitsV1: IconSet = {
       },
     },
     7: {
+      5: { breakpoints: [0, 0.6875, 0.6875, 0.6875, 0.6875, 0.6875, 1, 1.4375, 1.4375, 1.6042, 1.9167, 1.9167, 2] },
       4: { breakpoints: [0, 1, 1.0833, 1.0833, 1.0833, 1.1042, 1.25, 1.3542, 1.5, 1.625, 1.6667, 1.6667, 2] },
     },
     8: {
+      1: { breakpoints: [0, 0.25, 0.4792, 0.5625, 0.8125, 1, 1.0625, 1.3125, 1.5625, 1.6042, 1.6042, 1.75, 2] },
       // 0's leftmost and rightmost points (after 3 and 9 segments) both land on the waist
       0: {
         tracing: '8-like-0',
@@ -198,6 +224,9 @@ const digitsV1: IconSet = {
       9: { startSegment: 1 },
     },
     9: {
+      1: { breakpoints: [0, 0.25, 0.5, 0.75, 0.8125, 1, 1.1042, 1.2292, 1.3542, 1.4583, 1.6042, 1.6875, 2] },
+      2: { breakpoints: [0, 0.25, 0.375, 0.375, 0.5, 0.625, 0.75, 0.875, 1, 1.2708, 1.4375, 2, 2] },
+      3: { breakpoints: [0, 0.25, 0.4792, 0.4792, 0.4792, 0.625, 0.75, 0.875, 1, 1.1667, 1.3125, 1.9583, 2] },
       5: { breakpoints: [0, 0, 0.25, 0.2917, 0.3125, 0.5625, 0.8125, 1, 1.0833, 1.0833, 1.5, 1.8542, 2] },
       // turned back by 180° this is exactly the 6 (same segment split, same direction) → a pure spin
       6: { breakpoints: [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1, 1.25, 1.5, 1.75, 2], reversed: true },

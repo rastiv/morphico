@@ -45,10 +45,10 @@ Within a set every state's path is `M x y` + **exactly `segmentCount` cubic segm
 - Workflow: user rates transitions (Good / Midd / Bad) → `tools/check.ts` for non-Good pairs → add `pairLayouts` entries (leave Good pairs untouched) → `tools/verify.ts` → user re-checks. Look for symmetries first. Run `check.ts` with the closed shape second (only the second gets start segments). Alternative tracings aren't searched automatically.
 
 ## Status: v1 (2026-10-25)
-- Geometric sans digits fitted from `icons/v1/*.png`: 12 segments, stroke 1.6, round ends + round corners (user choice; open ends pulled in by half a stroke so the outline matches the flat-ended images). Shared geometry: big circle r 4.4 (2, 3, 6, 8, 9), small r 3.6 (top of 3 and 8, touching at 12,11.2), 3 = right half of 8's circles, 9 = 6 turned 180°, 2's bowl = 9's circle, 0 = ellipse 5.05 × 8.
+- Geometric sans digits fitted from `icons/v1/*.png`: 12 segments, stroke 1.2 (images: 1.6), round ends + round corners (user choice; open ends pulled in by half a stroke so the outline matches the flat-ended images). Shared geometry: big circle r 4.4 (2, 3, 6, 8, 9), small r 3.6 (top of 3 and 8, touching at 12,11.2), 3 = right half of 8's circles, 9 = 6 turned 180°, 2's bowl = 9's circle, 0 = ellipse 5.05 × 8.
 - Tuned pairs (`pairLayouts`, alternative tracings `8-like-0`, `8-two-loops`, `8-mirrored`, `8-from-right`, `6-clockwise`): 0→1…5, 0→7, 0→8, 0→9 (user's start points), 3→8, 4→8, 5→6, 5→8, 5→9 (user's arrows), 2→4, 3→4, 3→6, 4→5, 4→6, 4→7, 6→7 (optimizer). Spins: 6↔9 (pure, cost 0), 8↔9, 2↔6.
-- Confirmed good by the user: 6→7. Others are waiting for the user's visual check.
-- Not tuned yet (default pairing): 0→6, 1→2…9, 2→3, 2→5, 2→7, 2→8, 2→9, 3→5, 3→7, 3→9, 5→7, 6→8, 7→8, 7→9. Idea: 2→9 can use the 2 ↔ 9 fit (cost ~249) without spinning.
+- Confirmed good by the user: 6→7; with the default pairing 0→6, 1→2, 1→3, 1→5, 1→7, 2→3, 2→7, 2→8, 3→5, 3→7, 6→8, 7→8, 7→9 (leave untouched). 1→9 "relatively good" → optimizer refinement; 1→4, 1→6, 1→8, 2→5, 2→9, 3→9, 5→7 improved on request (optimizer). Others are waiting for the user's visual check.
+- First rating round complete (all 45 pairs). Next: user re-checks the changed pairs. Unclear: the user wrote "2 → 6 try to improve" in the list where 1 → 6 belonged — 1→6 was improved; ask about 2→6 (spin) if it comes up.
 - Decided: round ends/corners; 0 and 8 equal height (both y 4…20); text cell width 10, spacing 4.
 
 ## Library plan (agreed 2026-10-25)
