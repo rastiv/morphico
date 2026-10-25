@@ -40,6 +40,52 @@ export const ellipse = (centerX: number, centerY: number, radiusX: number, radiu
   ];
 };
 
+/**
+ * A polyline whose corners are rounded: straight lines joined by tangent circle arcs.
+ * `radii[index]` rounds the corner at `points[index]` (a single number rounds every corner; 0 = sharp corner).
+ * Straight-through points and reversals (going back along the same line) always stay sharp.
+ */
+export const roundedPolyline = (points: Point[], radii: number | number[]): Stroke[] => {
+  const strokes: Stroke[] = [];
+  const addLine = (from: Point, to: Point) => {
+    if (Math.hypot(to[0] - from[0], to[1] - from[1]) > EPSILON) strokes.push(line(...from, ...to));
+  };
+  let current = points[0];
+  for (let index = 1; index < points.length; index++) {
+    const corner = points[index];
+    const next = points[index + 1];
+    const radius = Array.isArray(radii) ? (radii[index] ?? 0) : radii;
+    if (!next || radius <= 0) {
+      addLine(current, corner);
+      current = corner;
+      continue;
+    }
+    const incoming = unitVector(current, corner), outgoing = unitVector(corner, next);
+    const cross = incoming[0] * outgoing[1] - incoming[1] * outgoing[0];
+    const turn = Math.atan2(cross, incoming[0] * outgoing[0] + incoming[1] * outgoing[1]); // radians, > 0 = clockwise
+    if (Math.abs(turn) < 1e-6 || Math.abs(turn) > Math.PI - 1e-6) {
+      addLine(current, corner);
+      current = corner;
+      continue;
+    }
+    const tangentDistance = radius * Math.tan(Math.abs(turn) / 2);
+    const arcStart: Point = [corner[0] - incoming[0] * tangentDistance, corner[1] - incoming[1] * tangentDistance];
+    // the centre lies on the inside of the turn
+    const inward: Point = turn > 0 ? [-incoming[1], incoming[0]] : [incoming[1], -incoming[0]];
+    const center: Point = [arcStart[0] + inward[0] * radius, arcStart[1] + inward[1] * radius];
+    const startAngle = Math.atan2(arcStart[1] - center[1], arcStart[0] - center[0]) / DEGREE;
+    addLine(current, arcStart);
+    strokes.push(arc(center[0], center[1], radius, startAngle, startAngle + turn / DEGREE));
+    current = [corner[0] + outgoing[0] * tangentDistance, corner[1] + outgoing[1] * tangentDistance];
+  }
+  return strokes;
+};
+
+const unitVector = (from: Point, to: Point): Point => {
+  const length = Math.hypot(to[0] - from[0], to[1] - from[1]);
+  return [(to[0] - from[0]) / length, (to[1] - from[1]) / length];
+};
+
 const arcSweep = (stroke: ArcStroke): number => Math.abs(stroke.endAngle - stroke.startAngle);
 
 // ---- path numbers ⇄ segments ----
