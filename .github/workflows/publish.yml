@@ -1,7 +1,6 @@
 # Publishes to npm when a version tag (v1.2.3) is pushed — only after the CI checks pass.
-# Authentication: npm Trusted Publishing (OIDC, no secret; set up in the package's settings on npmjs.com).
-# The NPM_TOKEN secret is only for the very first publish, before Trusted Publishing can be set up;
-# delete the secret afterwards — npm then uses OIDC.
+# Authentication: npm Trusted Publishing (OIDC, no token or secret). Configured on npmjs.com:
+# package morphico → Settings → Trusted Publisher → GitHub Actions, rastiv/morphico, publish.yml.
 name: Publish
 
 on:
@@ -33,5 +32,3 @@ jobs:
       - run: npm ci
       # npm publish runs the prepublishOnly script first: typecheck + build
       - run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
