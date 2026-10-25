@@ -4,11 +4,13 @@ import { defaultShapes, interpolate, rotateAroundCenter, shapeForPair, toPathDat
 import digitsV1 from '../src/sets/v1.ts';
 import digitsV2 from '../src/sets/v2.ts';
 import digitsV3 from '../src/sets/v3.ts';
+import digitsV4 from '../src/sets/v4.ts';
+import digitsV5 from '../src/sets/v5.ts';
 import type { IconSet, PathNumbers } from '../src/types.ts';
 
 type EasingName = keyof typeof easings;
 
-const ICON_SETS: Record<string, IconSet> = { v1: digitsV1, v2: digitsV2, v3: digitsV3 };
+const ICON_SETS: Record<string, IconSet> = { v1: digitsV1, v2: digitsV2, v3: digitsV3, v4: digitsV4, v5: digitsV5 };
 const DIGITS = [...'0123456789'];
 const PRESET_COLORS = ['#e8e8ea', '#7aa2ff', '#69db7c', '#ffd43b', '#ffa94d', '#ff6b6b', '#f783ac', '#9775fa'];
 const AUTO_PLAY_PAUSE = 700; // ms between two auto-play morphs
