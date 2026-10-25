@@ -1,4 +1,5 @@
 dist/
+icons/
 .build/
 node_modules/
 *.log
