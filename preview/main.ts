@@ -1,24 +1,15 @@
 // Preview page (dev only, not published). Served as JavaScript by tools/serve.ts.
 import { animate, easings } from '../src/engine.ts';
 import { defaultShapes, interpolate, rotateAroundCenter, shapeForPair, toPathData, toSegments } from '../src/geometry.ts';
-import roundDigits from '../src/sets/round.ts';
-import squareDigits from '../src/sets/square.ts';
-import condensedDigits from '../src/sets/condensed.ts';
-import slimDigits from '../src/sets/slim.ts';
-import handwrittenDigits from '../src/sets/handwritten.ts';
+import { iconSets } from '../src/iconSets.ts';
+import type { EasingName } from '../src/morph.ts';
+import { text } from '../src/text.ts';
+import type { Text } from '../src/text.ts';
 import type { IconSet, PathNumbers } from '../src/types.ts';
 
-type EasingName = keyof typeof easings;
-
-const ICON_SETS: Record<string, IconSet> = {
-  round: roundDigits,
-  square: squareDigits,
-  condensed: condensedDigits,
-  slim: slimDigits,
-  handwritten: handwrittenDigits,
-};
+const ICON_SETS: Record<string, IconSet> = iconSets;
 const DEFAULT_SET = 'round';
-const DIGITS = [...'0123456789'];
+const DIGITS = [...'0123456789-'];
 const PRESET_COLORS = ['#e8e8ea', '#7aa2ff', '#69db7c', '#ffd43b', '#ffa94d', '#ff6b6b', '#f783ac', '#9775fa'];
 const AUTO_PLAY_PAUSE = 700; // ms between two auto-play morphs
 
@@ -205,6 +196,8 @@ function selectIconSet(setName: string): void {
   currentPath = null;
   goTo('0');
   showProgress(1);
+  cellWidthInput.value = String(iconSet.textLayout.cellWidth);
+  spacingInput.value = String(iconSet.textLayout.spacing);
   buildTextLine();
 }
 
@@ -225,133 +218,28 @@ function showGrid(on: boolean): void {
   settings.write('grid', on ? '1' : '');
 }
 
-// ---- text preview: a line of characters in narrow cells; changed digits morph ----
+// ---- text preview: the library's text(); changed digits morph ----
 
-const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
-/** Vertical part of the 24×24 grid shown in a text cell: y 3…21 covers every digit incl. stroke and corners. */
-const CELL_TOP = 3;
-const CELL_HEIGHT = 18;
-/** Width of the `:` cell; its dots sit at the centres of the 8's two circles. */
-const COLON_WIDTH = 5;
-const COLON_DOT_Y = [7.6, 15.6];
-const isDigit = (character: string) => character >= '0' && character <= '9';
-
-interface TextSlot {
-  character: string;
-  svg: SVGSVGElement;
-  path: SVGPathElement | null;
-  currentPath: PathNumbers | null;
-  settled: boolean;
-  stopAnimation: (() => void) | null;
-}
-let textSlots: TextSlot[] = [];
+let textLineControl: Text | null = null;
 let liveClockTimer = 0;
 
-const cellWidthOf = (character: string): number => {
-  const cellWidth = Number(cellWidthInput.value);
-  if (isDigit(character)) return cellWidth;
-  return character === ':' ? COLON_WIDTH : cellWidth / 2;
-};
-
-function createSlot(character: string): TextSlot {
-  const svg = document.createElementNS(SVG_NAMESPACE, 'svg');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', String(iconSet.strokeWidth));
-  svg.setAttribute('stroke-linecap', iconSet.lineCap);
-  svg.setAttribute('stroke-linejoin', iconSet.lineJoin);
-  svg.setAttribute('aria-hidden', 'true');
-  const slot: TextSlot = { character, svg, path: null, currentPath: null, settled: true, stopAnimation: null };
-  if (character === ':') {
-    for (const dotY of COLON_DOT_Y) {
-      const dot = document.createElementNS(SVG_NAMESPACE, 'circle');
-      dot.setAttribute('cx', '12');
-      dot.setAttribute('cy', String(dotY));
-      dot.setAttribute('r', String(iconSet.strokeWidth * 0.6));
-      dot.setAttribute('fill', 'currentColor');
-      dot.setAttribute('stroke', 'none');
-      svg.appendChild(dot);
-    }
-  } else if (isDigit(character)) {
-    slot.path = document.createElementNS(SVG_NAMESPACE, 'path');
-    svg.appendChild(slot.path);
-    setSlotPath(slot, shapes[character] ?? null);
-  }
-  return slot;
-}
-
-function setSlotPath(slot: TextSlot, path: PathNumbers | null): void {
-  slot.currentPath = path;
-  if (!slot.path) return;
-  if (path) slot.path.setAttribute('d', toPathData(path));
-  else slot.path.removeAttribute('d');
-}
-
-/** Size and frame of every cell (called when a slider moves). */
-function layoutTextLine(): void {
-  const textSize = Number(textSizeInput.value);
-  const pixelsPerUnit = textSize / CELL_HEIGHT;
-  const spacing = Number(spacingInput.value) * pixelsPerUnit;
-  textSlots.forEach((slot, index) => {
-    const width = cellWidthOf(slot.character);
-    slot.svg.setAttribute('viewBox', `${12 - width / 2} ${CELL_TOP} ${width} ${CELL_HEIGHT}`);
-    slot.svg.setAttribute('width', String(width * pixelsPerUnit));
-    slot.svg.setAttribute('height', String(textSize));
-    slot.svg.style.marginLeft = index === 0 ? '0' : `${spacing}px`;
+/** Rebuilds the line (new set, or a cell width / spacing / size slider moved). */
+function buildTextLine(): void {
+  textLineControl?.destroy();
+  textLineControl = text(textLine, {
+    set: iconSet,
+    value: textInput.value,
+    size: `${textSizeInput.value}px`,
+    cellWidth: Number(cellWidthInput.value),
+    spacing: Number(spacingInput.value),
   });
   cellWidthOutput.textContent = cellWidthInput.value;
   spacingOutput.textContent = spacingInput.value;
-  textSizeOutput.textContent = `${textSize}px`;
+  textSizeOutput.textContent = `${textSizeInput.value}px`;
 }
 
-/** Builds the line from scratch, without animation (new set, or the text length changed). */
-function buildTextLine(): void {
-  for (const slot of textSlots) slot.stopAnimation?.();
-  textSlots = [...textInput.value].map(createSlot);
-  textLine.replaceChildren(...textSlots.map((slot) => slot.svg));
-  textLine.setAttribute('aria-label', textInput.value);
-  layoutTextLine();
-}
-
-function morphSlot(slot: TextSlot, nextDigit: string): void {
-  const previousDigit = slot.character;
-  slot.character = nextDigit;
-  slot.stopAnimation?.();
-  slot.stopAnimation = null;
-  if (!shapes[nextDigit] || !slot.currentPath) {
-    slot.settled = true;
-    setSlotPath(slot, shapes[nextDigit] ?? null);
-    return;
-  }
-  const from = slot.settled ? shapeForPair(iconSet, shapes, previousDigit, nextDigit) : slot.currentPath;
-  const to = shapeForPair(iconSet, shapes, nextDigit, previousDigit);
-  const spin = (slot.settled && iconSet.spins[previousDigit]?.[nextDigit]) || 0;
-  slot.settled = false;
-  const duration = Number(durationInput.value);
-  const easing = easings[easingSelect.value as EasingName];
-  const startTime = performance.now();
-  slot.stopAnimation = animate((frameTime) => {
-    const progress = Math.min(Math.max((frameTime - startTime) / duration, 0), 1);
-    setSlotPath(slot, blend(from, to, easing(progress), spin));
-    if (progress >= 1) slot.settled = true;
-    return progress < 1;
-  });
-}
-
-/** Morphs only the digits that changed; anything else (other length, digit ↔ non-digit) is rebuilt. */
-function updateTextLine(text: string): void {
-  const characters = [...text];
-  const sameShape = characters.length === textSlots.length
-    && characters.every((character, index) => isDigit(character) === isDigit(textSlots[index].character)
-      && (isDigit(character) || character === textSlots[index].character));
-  if (!sameShape) {
-    buildTextLine();
-    return;
-  }
-  characters.forEach((character, index) => {
-    if (character !== textSlots[index].character) morphSlot(textSlots[index], character);
-  });
-  textLine.setAttribute('aria-label', text);
+function updateTextLine(value: string): void {
+  textLineControl?.set(value, { duration: Number(durationInput.value), easing: easingSelect.value as EasingName });
 }
 
 const twoDigits = (value: number) => String(value).padStart(2, '0');
@@ -411,20 +299,19 @@ debugToggle.onchange = () => {
 };
 
 textInput.value = settings.read('text') ?? textInput.value;
-cellWidthInput.value = settings.read('cell-width') ?? cellWidthInput.value;
-spacingInput.value = settings.read('spacing') ?? spacingInput.value;
 textSizeInput.value = settings.read('text-size') ?? textSizeInput.value;
 textInput.oninput = () => {
   setLiveClock(false);
   settings.write('text', textInput.value);
   updateTextLine(textInput.value);
 };
-for (const [input, key] of [[cellWidthInput, 'cell-width'], [spacingInput, 'spacing'], [textSizeInput, 'text-size']] as const) {
-  input.oninput = () => {
-    settings.write(key, input.value);
-    layoutTextLine();
-  };
-}
+// cell width and spacing start at the set's defaults (selectIconSet); the size is remembered
+cellWidthInput.oninput = buildTextLine;
+spacingInput.oninput = buildTextLine;
+textSizeInput.oninput = () => {
+  settings.write('text-size', textSizeInput.value);
+  buildTextLine();
+};
 liveClockToggle.onchange = () => setLiveClock(liveClockToggle.checked);
 
 const rememberedSet = settings.read('set');

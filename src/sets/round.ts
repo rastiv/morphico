@@ -38,7 +38,7 @@ const FIVE_JOIN_ANGLE = 237.2;
 /** The 7's foot: on the measured diagonal (16, 4.2 → 7.45, 20.6), pulled in to the base line. */
 const SEVEN_FOOT = pointAtY([16, TOP_BAR_Y], [7.45, 20.6], BASE_Y);
 
-const roundDigits: IconSet = {
+export const roundDigits: IconSet = {
   segmentCount: 12,
   strokeWidth: STROKE_WIDTH,
   lineCap: 'round',
@@ -79,6 +79,7 @@ const roundDigits: IconSet = {
       arc(12, 8.4, BIG_RADIUS, SIX_TAIL_ANGLE + 180 - 360, SIX_TAIL_ANGLE + 180),
       line(...pointOnCircle(12, 8.4, BIG_RADIUS, SIX_TAIL_ANGLE + 180), ...NINE_TAIL_END),
     ],
+    '-': [line(9.5, 12, 14.5, 12)], // minus / hyphen: morphs like a digit
   },
   alternativeStrokes: {
     // the 8 traced like the 0 (from the top, counter-clockwise): left half of the top circle down to the waist,
@@ -242,6 +243,5 @@ const roundDigits: IconSet = {
     8: { 9: 180 },
     9: { 6: -180, 8: -180 },
   },
+  textLayout: { cellWidth: 10, spacing: 4, baselineY: 19.8, colonDotsY: [7.6, 15.6] },
 };
-
-export default roundDigits;

@@ -5,9 +5,10 @@
 //        dist/morphico.js    classic script, global `morphico` (jsDelivr serves .min.js automatically)
 //   3. declarations are copied to dist/types/
 //   4. smoke test: both files load and expose the same names
+// Every file except the entry is wrapped in its own scope, so only exported names must be unique across files.
 // Source rules that keep the joining simple: relative imports on one line (`import { a } from './x.ts';`),
-// type-only imports as `import type`, top-level names unique across files, the entry exports only via
-// `export const|let|function|class`.
+// type-only imports as `import type`, exports only via `export const|let|function|class`; the entry may also
+// re-export with `export { a } from './x.ts';`.
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -16,7 +17,9 @@ import { pathToFileURL } from 'node:url';
 process.chdir(path.resolve(import.meta.dirname, '..'));
 const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8')) as { version: string; license: string };
 const COMPILED = '.build';
-const RELATIVE_IMPORT = /^import\s*\{[^}]*\}\s*from\s*'(\.[^']+\.js)';[ \t]*\r?\n?/gm;
+const RELATIVE_IMPORT = /^(import|export)\s*\{([^}]*)\}\s*from\s*'(\.[^']+\.js)';[ \t]*\r?\n?/gm;
+const DECLARED_EXPORT = /^export\s+(?:const|let|function\*?|class)\s+([\w$]+)/gm;
+const declaredExports = (code: string): string[] => [...code.matchAll(DECLARED_EXPORT)].map((match) => match[1]);
 
 fs.rmSync(COMPILED, { recursive: true, force: true });
 fs.rmSync('dist', { recursive: true, force: true });
@@ -27,18 +30,25 @@ const modules: { file: string; code: string }[] = [];
 const collect = (file: string): void => {
   if (modules.some((collected) => collected.file === file)) return;
   const code = fs.readFileSync(file, 'utf8');
-  for (const [, importPath] of code.matchAll(RELATIVE_IMPORT)) collect(path.join(path.dirname(file), importPath));
+  for (const [, , , importPath] of code.matchAll(RELATIVE_IMPORT)) collect(path.join(path.dirname(file), importPath));
   modules.push({ file, code });
 };
 collect(path.join(COMPILED, 'index.js'));
 
-const exportedNames = [...modules[modules.length - 1].code.matchAll(/^export\s+(?:const|let|function\*?|class)\s+([\w$]+)/gm)]
-  .map((match) => match[1]);
+const entry = modules[modules.length - 1];
+const reExportedNames = [...entry.code.matchAll(RELATIVE_IMPORT)]
+  .filter(([, keyword]) => keyword === 'export')
+  .flatMap(([, , names]) => names.split(',').map((name) => name.trim()).filter(Boolean));
+const exportedNames = [...reExportedNames, ...declaredExports(entry.code)];
 const body = modules.map(({ file, code }) => {
   const joinable = code.replace(RELATIVE_IMPORT, '').replace(/^export\s+(?=const|let|function|class)/gm, '').trim();
   const leftover = joinable.match(/^\s*(import|export)\b.*/m);
   if (leftover) throw new Error(`${file}: statement build.ts cannot join: ${leftover[0]}`);
-  return `// ${path.relative(COMPILED, file).replace(/\\/g, '/').replace(/\.js$/, '.ts')}\n${joinable}`;
+  const heading = `// ${path.relative(COMPILED, file).replace(/\\/g, '/').replace(/\.js$/, '.ts')}`;
+  if (file === entry.file) return `${heading}\n${joinable}`;
+  // a scope of its own: helpers with the same name in two files don't clash
+  const names = declaredExports(code).join(', ');
+  return `${heading}\nconst { ${names} } = (() => {\n${joinable}\nreturn { ${names} };\n})();`;
 }).join('\n\n').replace(/(const version = )'dev'/, `$1'${packageJson.version}'`);
 
 const banner = `/*! morphico v${packageJson.version} | ${packageJson.license} License */\n`;

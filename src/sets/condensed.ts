@@ -9,7 +9,7 @@
 //  - 0 = stadium; 8 = two stacked rounded rectangles sharing the middle bar; 9 = 6 turned 180° around 12,12;
 //    the 5 ends with the same small upturn as the 9
 //  - T-junctions (4's right stem) are drawn out and back over themselves
-import { roundedPolyline } from '../geometry.ts';
+import { line, roundedPolyline } from '../geometry.ts';
 import type { IconSet, Point } from '../types.ts';
 
 const PIXELS_PER_UNIT = 5.5;
@@ -37,7 +37,7 @@ const HOOK_END_Y = 79;
 const SIX_POINTS: Point[] = [[47, 94 - HOOK_END_Y], [47, 3], [3, 3], [3, 91], [47, 91], [47, 47], [3, 47]];
 const SIX_RADII = [0, OUTER_RADIUS, OUTER_RADIUS, OUTER_RADIUS, OUTER_RADIUS, MIDDLE_RADIUS, 0];
 
-const condensedDigits: IconSet = {
+export const condensedDigits: IconSet = {
   segmentCount: 20,
   strokeWidth: 6 / PIXELS_PER_UNIT,
   lineCap: 'round',
@@ -68,6 +68,7 @@ const condensedDigits: IconSet = {
       SIX_POINTS.map(fromImage(50)).map(turnedAround).reverse(),
       [...SIX_RADII].reverse().map((radius) => radius / PIXELS_PER_UNIT),
     ),
+    '-': [line(9.5, 12, 14.5, 12)], // minus / hyphen: morphs like a digit
   },
   alternativeStrokes: {
     // the 8 traced like the 0 (from the top, counter-clockwise): left side of the top box down to the middle of
@@ -150,6 +151,5 @@ const condensedDigits: IconSet = {
     },
   },
   spins: { 6: { 9: 180 }, 9: { 6: -180 } },
+  textLayout: { cellWidth: 8, spacing: 3.5, baselineY: 20, colonDotsY: [8, 16] },
 };
-
-export default condensedDigits;

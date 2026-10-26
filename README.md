@@ -2,7 +2,77 @@
 
 Morphing line-art icons for the web: digits (and later other icon states) that smoothly change from one to another by interpolating SVG path data. No runtime dependencies.
 
-> **Status:** early development. The API is not available yet. Version 0.0.x only tests the release pipeline.
+> **Status:** early development (0.x): the API may still change.
+
+## Install
+
+```sh
+npm install morphico
+```
+
+```ts
+import { icon, text } from 'morphico';
+```
+
+Or from a CDN, as a classic script with the global `morphico`:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/morphico"></script>
+<script>
+  const { icon, text } = morphico;
+</script>
+```
+
+## One icon: `icon(element, options)`
+
+```ts
+const digit = icon(document.querySelector('#digit'), { state: '4' });
+
+await digit.to('7');                          // the promise resolves when the morph ends
+digit.to('8', { onEnd: (result) => {} });     // or pass a callback
+digit.destroy();                              // stops and removes it (e.g. when a component unmounts)
+```
+
+States: `'0'`…`'9'`, `'-'`, and `' '` (empty: nothing drawn, shapes grow out of it and fade).
+
+## A line of characters: `text(element, options)`
+
+```ts
+const clock = text(document.querySelector('#clock'), { value: '04:59' });
+
+clock.set('05:00');   // only the digits that changed morph
+clock.destroy();
+```
+
+- Supported characters: digits `0`–`9`, `-` and space morph; `:` `.` `,` `/` stay still.
+  **Any other character is removed** (with the regex `/[^0-9 :.,\/-]/g`): `'12:09 AM'` shows `12:09 `.
+- If the length or the places of `:` `.` `,` `/` change, the line is rebuilt without animation. Pad counters with
+  spaces to keep them morphing: `counter.set(String(count).padStart(3, ' '))`.
+- Digits sit on the text baseline, and every cell has the same width, so clocks don't jiggle.
+
+## Options
+
+| Option | For | Default | |
+| --- | --- | --- | --- |
+| `set` | both | `'round'` | `'round'`, `'square'`, `'condensed'`, `'slim'`, `'handwritten'` |
+| `state` / `value` | icon / text | empty | What is shown first |
+| `size` | both | `'1em'` | CSS size (icon: width and height; text: height). `1em` follows the font size |
+| `duration` | both | `400` | Milliseconds |
+| `easing` | both | `'easeInOutCubic'` | `'linear'`, `'easeInOutCubic'`, `'easeOutBack'`, `'easeOutElastic'`, or a function `(progress) => easedProgress` |
+| `cellWidth` | text | per set | Width of a digit cell in grid units (a digit is 16 high) |
+| `spacing` | text | per set | Gap between cells in grid units |
+
+`duration` and `easing` can also be passed to a single `to()` / `set()` call.
+
+## Behaviour
+
+- **Colour** comes from the CSS `color` (`currentColor`).
+- **Spacing** can be set in CSS too: `--morphico-spacing: 0.15em`.
+- **Interrupting:** calling `to()` / `set()` during a morph starts the new morph from the shape on screen.
+  The earlier promise resolves with `{ interrupted: true }`; promises never stay pending.
+- **Reduced motion:** when the user's system asks for reduced motion, shapes change without animation.
+- **Accessibility:** the icon / line has `role="img"` and an `aria-label` with the current value.
+- **Server-side rendering:** importing does not touch the DOM; only `icon()` / `text()` do.
 
 ## Development
 

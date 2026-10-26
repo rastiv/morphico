@@ -126,6 +126,10 @@ export const toPathData = (path: PathNumbers): string =>
     .map(([, control1, control2, end]) => `C${[...control1, ...control2, ...end].map(formatNumber).join(' ')}`)
     .join('');
 
+/** Shrinks (factor < 1) or grows the whole shape around the icon center (12, 12). */
+export const scaleAroundCenter = (path: PathNumbers, factor: number): PathNumbers =>
+  path.map((value) => ICON_CENTER + (value - ICON_CENTER) * factor);
+
 /** Rotates the whole shape around the icon center (12, 12). */
 export const rotateAroundCenter = (path: PathNumbers, angle: number): PathNumbers => {
   const cos = Math.cos(angle * DEGREE), sin = Math.sin(angle * DEGREE);

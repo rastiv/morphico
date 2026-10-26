@@ -58,6 +58,18 @@ export interface PairLayout {
   rotation?: number;
 }
 
+/** How a set's characters sit in the narrow cells of `text()`. Numbers are in grid units (digits are 16 high). */
+export interface TextLayout {
+  /** Default width of a digit cell. */
+  cellWidth: number;
+  /** Default gap between two cells. */
+  spacing: number;
+  /** y of the line the digits stand on (stroke centre); `.` and `,` sit there and `/` spans to `24 - baselineY`. */
+  baselineY: number;
+  /** y of the two dots of `:` (the centres of the 8's loops). */
+  colonDotsY: [top: number, bottom: number];
+}
+
 export interface IconSet {
   /** Cubic segments per shape. The state that needs the most segments decides it. */
   segmentCount: number;
@@ -74,4 +86,5 @@ export interface IconSet {
   pairLayouts: Record<string, Record<string, PairLayout>>;
   /** `spins[fromState][toState]`: degrees to rotate around the icon center while morphing. */
   spins: Record<string, Record<string, number>>;
+  textLayout: TextLayout;
 }

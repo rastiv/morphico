@@ -43,7 +43,7 @@ const SIX: Stroke[] = [
   ),
 ];
 
-const slimDigits: IconSet = {
+export const slimDigits: IconSet = {
   segmentCount: 16,
   strokeWidth: 6 / 5.5,
   lineCap: 'round',
@@ -72,6 +72,7 @@ const slimDigits: IconSet = {
     8: [topArc(90, 450), bottomArc(270, -90)],
     // the 6 turned 180°, drawn the other way round
     9: SIX.map(turnedAround).reverse(),
+    '-': [line(9.5, 12, 14.5, 12)], // minus / hyphen: morphs like a digit
   },
   alternativeStrokes: {
     // the 8 traced like the 0 (as in the round set): from the top counter-clockwise — left half of TOP down to the waist,
@@ -151,6 +152,5 @@ const slimDigits: IconSet = {
   },
   // 9 is exactly 6 turned 180°; 2 → 6 also turns (it is 2 → 9 in the turning frame)
   spins: { 2: { 6: 180 }, 6: { 9: 180, 2: -180 }, 9: { 6: -180 } },
+  textLayout: { cellWidth: 9.5, spacing: 4, baselineY: 20, colonDotsY: [8, 16] },
 };
-
-export default slimDigits;
