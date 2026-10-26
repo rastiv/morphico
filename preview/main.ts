@@ -1,16 +1,30 @@
 // Preview page (dev only, not published). Served as JavaScript by tools/serve.ts.
+// Two tabs: Digits (digit sets + the text line) and Icons (icon families). The style panel overrides the set's
+// own look the same way the library options do (strokeWidth, lineCap, lineJoin, fill, roundness).
 import { animate, easings } from '../src/engine.ts';
-import { defaultShapes, interpolate, rotateAroundCenter, shapeForPair, toPathData, toSegments } from '../src/geometry.ts';
-import { iconSets } from '../src/iconSets.ts';
+import {
+  defaultShapes, interpolate, pieceLengthOf, rotateAroundCenter, shapeForPair, splitPieces, toPathData, toSegments,
+} from '../src/geometry.ts';
+import { iconSets, resolveIconSet } from '../src/iconSets.ts';
+import type { IconSetName } from '../src/iconSets.ts';
 import type { EasingName } from '../src/morph.ts';
+import type { StyleOptions } from '../src/svg.ts';
 import { text } from '../src/text.ts';
 import type { Text } from '../src/text.ts';
 import type { IconSet, PathNumbers } from '../src/types.ts';
 
-const ICON_SETS: Record<string, IconSet> = iconSets;
-const DEFAULT_SET = 'round';
+type Tab = 'digits' | 'icons';
+/** What the style panel changes; a missing value means "the set's own". */
+interface StyleChoices extends StyleOptions {
+  roundness?: number;
+}
+
+const SET_NAMES = Object.keys(iconSets) as IconSetName[];
+const DEFAULT_SETS: Record<Tab, IconSetName> = { digits: 'round', icons: 'media' };
 const DIGITS = [...'0123456789-'];
 const PRESET_COLORS = ['#e8e8ea', '#7aa2ff', '#69db7c', '#ffd43b', '#ffa94d', '#ff6b6b', '#f783ac', '#9775fa'];
+const LINE_CAPS: IconSet['lineCap'][] = ['round', 'butt', 'square'];
+const LINE_JOINS: IconSet['lineJoin'][] = ['round', 'miter', 'bevel'];
 const AUTO_PLAY_PAUSE = 700; // ms between two auto-play morphs
 
 const elementById = <ElementType extends Element = HTMLElement>(id: string): ElementType => {
@@ -18,23 +32,35 @@ const elementById = <ElementType extends Element = HTMLElement>(id: string): Ele
   if (!element) throw new Error(`#${id} is missing in index.html`);
   return element as unknown as ElementType;
 };
+const tabButtons = elementById('tabs');
+const setButtons = elementById('set-buttons');
+const stateButtons = elementById('state-buttons');
 const morphPath = elementById<SVGPathElement>('morph-path');
 const debugLayer = elementById<SVGGElement>('debug-layer');
 const gridLayer = elementById<SVGGElement>('grid-layer');
-const setButtons = elementById('set-buttons');
-const digitButtons = elementById('digit-buttons');
+const progressInput = elementById<HTMLInputElement>('progress');
+const progressOutput = elementById<HTMLOutputElement>('progress-output');
 const durationInput = elementById<HTMLInputElement>('duration');
 const durationOutput = elementById<HTMLOutputElement>('duration-output');
 const easingSelect = elementById<HTMLSelectElement>('easing');
-const progressInput = elementById<HTMLInputElement>('progress');
-const progressOutput = elementById<HTMLOutputElement>('progress-output');
+const autoPlayToggle = elementById<HTMLInputElement>('auto-play');
 const colorSwatches = elementById('color-swatches');
 const colorInput = elementById<HTMLInputElement>('color');
-const colorOutput = elementById<HTMLOutputElement>('color-output');
-const autoPlayToggle = elementById<HTMLInputElement>('auto-play');
+const strokeWidthInput = elementById<HTMLInputElement>('stroke-width');
+const strokeWidthOutput = elementById<HTMLOutputElement>('stroke-width-output');
+const strokeUnitButtons = elementById('stroke-unit');
+const lineCapButtons = elementById('line-cap');
+const lineJoinButtons = elementById('line-join');
+const fillButtons = elementById('fill');
+const lineJoinLabel = elementById('line-join-label');
+const lineJoinHint = elementById('line-join-hint');
+const roundnessRow = elementById('roundness-row');
+const roundnessInput = elementById<HTMLInputElement>('roundness');
+const roundnessOutput = elementById<HTMLOutputElement>('roundness-output');
 const gridToggle = elementById<HTMLInputElement>('show-grid');
 const debugToggle = elementById<HTMLInputElement>('show-debug');
 const pathOutput = elementById<HTMLPreElement>('path-output');
+const textPreview = elementById('text-preview');
 const textLine = elementById('text-line');
 const textInput = elementById<HTMLInputElement>('text-input');
 const cellWidthInput = elementById<HTMLInputElement>('cell-width');
@@ -54,23 +80,46 @@ const settings = {
     try { localStorage.setItem(`morphico.${key}`, value); } catch { /* not remembered */ }
   },
 };
+const readStyleChoices = (): StyleChoices => {
+  try { return JSON.parse(settings.read('style') ?? '{}') as StyleChoices; } catch { return {}; }
+};
 
-let iconSetName = DEFAULT_SET;
-let iconSet = ICON_SETS[iconSetName];
+let tab: Tab = 'digits';
+let iconSetName: IconSetName = DEFAULT_SETS.digits;
+let iconSet: IconSet = iconSets[iconSetName]; // with the chosen corner radius
+let style: StyleChoices = readStyleChoices();
 let shapes: Record<string, PathNumbers> = {};
 let morphFrom: PathNumbers | null = null;
 let morphTo: PathNumbers | null = null;
 let spinAngle = 0;
 let currentPath: PathNumbers | null = null;
-let targetDigit = '0';
+let targetState = '';
 let settled = true; // false while a morph runs (or was stopped half-way by the progress slider)
 let stopAnimation: (() => void) | null = null;
 let autoPlayTimer = 0;
 
+const easing = () => easings[easingSelect.value as EasingName];
 const stopRunningAnimation = (): void => {
   stopAnimation?.();
   stopAnimation = null;
 };
+const setsOfTab = (someTab: Tab) => SET_NAMES.filter((name) => Boolean(iconSets[name].textLayout) === (someTab === 'digits'));
+/** Digit sets always show 0–9 and - (dashed = not drawn yet); icon sets their own states. */
+const statesOf = (someSet: IconSet): string[] => (someSet.textLayout ? DIGITS : Object.keys(someSet.strokes));
+/** Stroke width as a CSS length (px) keeps its width on screen; a number scales with the icon. */
+const hasFixedWidth = () => typeof style.strokeWidth === 'string';
+// applied to every path (vector-effect is not inherited)
+const svgStyleAttributes = () => ({
+  'stroke-width': String(style.strokeWidth ?? iconSet.strokeWidth),
+  'vector-effect': hasFixedWidth() ? 'non-scaling-stroke' : 'none',
+  'stroke-linecap': style.lineCap ?? iconSet.lineCap,
+  'stroke-linejoin': style.lineJoin ?? iconSet.lineJoin,
+  fill: style.fill ? 'currentColor' : 'none',
+});
+const attributeText = (attributes: Record<string, string>) =>
+  Object.entries(attributes).map(([name, value]) => `${name}="${value}"`).join(' ');
+
+// ---- stage: the big icon, drawn directly (the progress slider and the debug overlay need the path numbers) ----
 
 /** Blends towards the target in the start's frame while turning that frame by spin · progress. */
 const blend = (from: PathNumbers, to: PathNumbers, progress: number, spin: number): PathNumbers => (spin
@@ -82,26 +131,28 @@ function render(path: PathNumbers | null): void {
   if (!path) {
     morphPath.removeAttribute('d');
     debugLayer.replaceChildren();
-    pathOutput.textContent = `${iconSetName} / ${targetDigit}: not drawn yet`;
+    pathOutput.textContent = `${iconSetName} / ${targetState}: not drawn yet`;
     return;
   }
-  const pathData = toPathData(path);
+  const pathData = toPathData(path, pieceLengthOf(iconSet));
   morphPath.setAttribute('d', pathData);
   pathOutput.textContent = pathData;
   if (debugToggle.checked) renderDebug(path);
 }
 
-/** Every segment in its own color, with control handles; the white dot marks the start point. */
+/** Every segment in its own color, with control handles; the white dot marks each piece's start point. */
 function renderDebug(path: PathNumbers): void {
-  const segments = toSegments(path);
-  debugLayer.innerHTML = segments.map(([start, control1, control2, end], segmentIndex) => {
-    const color = `hsl(${(segmentIndex * 360) / segments.length} 85% 65%)`;
-    return `<path d="M${start} C${control1} ${control2} ${end}" stroke="${color}" stroke-width="0.6"/>`
-      + `<path d="M${start} L${control1} M${end} L${control2}" stroke="${color}" stroke-width="0.06" opacity="0.7"/>`
-      + `<circle cx="${control1[0]}" cy="${control1[1]}" r="0.18" fill="${color}"/>`
-      + `<circle cx="${control2[0]}" cy="${control2[1]}" r="0.18" fill="${color}"/>`
-      + `<circle cx="${end[0]}" cy="${end[1]}" r="0.28" fill="var(--bg)" stroke="${color}" stroke-width="0.1"/>`;
-  }).join('') + `<circle cx="${path[0]}" cy="${path[1]}" r="0.45" fill="#fff"/>`;
+  debugLayer.innerHTML = splitPieces(path, pieceLengthOf(iconSet)).map((piece) => {
+    const segments = toSegments(piece);
+    return segments.map(([start, control1, control2, end], segmentIndex) => {
+      const color = `hsl(${(segmentIndex * 360) / segments.length} 85% 65%)`;
+      return `<path d="M${start} C${control1} ${control2} ${end}" stroke="${color}" stroke-width="0.6"/>`
+        + `<path d="M${start} L${control1} M${end} L${control2}" stroke="${color}" stroke-width="0.06" opacity="0.7"/>`
+        + `<circle cx="${control1[0]}" cy="${control1[1]}" r="0.18" fill="${color}"/>`
+        + `<circle cx="${control2[0]}" cy="${control2[1]}" r="0.18" fill="${color}"/>`
+        + `<circle cx="${end[0]}" cy="${end[1]}" r="0.28" fill="var(--bg)" stroke="${color}" stroke-width="0.1"/>`;
+    }).join('') + `<circle cx="${piece[0]}" cy="${piece[1]}" r="0.45" fill="#fff"/>`;
+  }).join('');
 }
 
 // 24×24 grid: a thin line every unit, stronger every 4 units, strongest through the center
@@ -115,33 +166,33 @@ function showProgress(progress: number): void {
   progressOutput.textContent = progress.toFixed(2);
 }
 
-function goTo(digit: string): void {
-  const previousDigit = targetDigit;
-  targetDigit = digit;
-  for (const button of digitButtons.querySelectorAll<HTMLButtonElement>('button')) {
-    button.classList.toggle('active', button.dataset.digit === digit);
+function goTo(state: string): void {
+  const previousState = targetState;
+  targetState = state;
+  for (const button of stateButtons.querySelectorAll<HTMLButtonElement>('button')) {
+    button.classList.toggle('active', button.dataset.state === state);
   }
   stopRunningAnimation();
-  if (!shapes[digit] || !currentPath) { // nothing to morph from or to: jump
-    morphFrom = morphTo = shapes[digit] ?? null;
+  if (!shapes[state] || !currentPath || !shapes[previousState]) { // nothing to morph from or to: jump
+    morphFrom = morphTo = shapes[state] ?? null;
     spinAngle = 0;
     settled = true;
     render(morphTo);
     return;
   }
-  const from = settled ? shapeForPair(iconSet, shapes, previousDigit, digit) : currentPath;
-  const to = shapeForPair(iconSet, shapes, digit, previousDigit);
+  const from = settled ? shapeForPair(iconSet, shapes, previousState, state) : currentPath;
+  const to = shapeForPair(iconSet, shapes, state, previousState);
   morphFrom = from;
   morphTo = to;
-  spinAngle = (settled && iconSet.spins[previousDigit]?.[digit]) || 0;
+  spinAngle = (settled && iconSet.spins[previousState]?.[state]) || 0;
   settled = false;
   const duration = Number(durationInput.value);
-  const easing = easings[easingSelect.value as EasingName];
+  const easeProgress = easing();
   const startTime = performance.now();
   stopAnimation = animate((frameTime) => {
     const progress = Math.min(Math.max((frameTime - startTime) / duration, 0), 1);
     showProgress(progress);
-    render(blend(from, to, easing(progress), spinAngle));
+    render(blend(from, to, easeProgress(progress), spinAngle));
     if (progress >= 1) settled = true;
     return progress < 1;
   });
@@ -149,63 +200,152 @@ function goTo(digit: string): void {
 
 function setAutoPlay(on: boolean): void {
   clearInterval(autoPlayTimer);
+  autoPlayToggle.checked = on;
   if (!on) return;
   autoPlayTimer = setInterval(() => {
-    const drawnDigits = DIGITS.filter((digit) => shapes[digit]);
-    if (drawnDigits.length) goTo(drawnDigits[(drawnDigits.indexOf(targetDigit) + 1) % drawnDigits.length]);
+    const drawnStates = statesOf(iconSet).filter((state) => shapes[state]);
+    if (drawnStates.length) goTo(drawnStates[(drawnStates.indexOf(targetState) + 1) % drawnStates.length]);
   }, Number(durationInput.value) + AUTO_PLAY_PAUSE);
 }
 
-function selectIconSet(setName: string): void {
-  stopRunningAnimation();
-  autoPlayToggle.checked = false;
-  setAutoPlay(false);
-  for (const button of setButtons.querySelectorAll<HTMLButtonElement>('button')) {
-    button.classList.toggle('active', button.dataset.set === setName);
+function buildStateButtons(): void {
+  stateButtons.replaceChildren();
+  for (const state of statesOf(iconSet)) {
+    const button = document.createElement('button');
+    const shape = shapes[state];
+    button.dataset.state = state;
+    button.title = shape ? `Morph to ${state}` : `${state}: not drawn yet`;
+    button.classList.toggle('not-drawn', !shape);
+    button.classList.toggle('active', state === targetState);
+    button.innerHTML = shape
+      ? `<svg viewBox="0 0 24 24" stroke="currentColor"><path ${attributeText(svgStyleAttributes())} d="${toPathData(shape, pieceLengthOf(iconSet))}"/></svg>`
+      : state;
+    button.onclick = () => {
+      setAutoPlay(false);
+      goTo(state);
+    };
+    stateButtons.appendChild(button);
   }
-  iconSetName = setName;
-  iconSet = ICON_SETS[setName];
-  settings.write('set', setName);
+}
+
+// ---- sets and tabs ----
+
+/** (Re)builds everything that depends on the set and its corner radius. */
+function loadIconSet(keepState: boolean): void {
+  stopRunningAnimation();
+  const baseSet = iconSets[iconSetName];
+  iconSet = style.roundness !== undefined && baseSet.withRoundness ? resolveIconSet(iconSetName, style.roundness) : baseSet;
   try {
     shapes = defaultShapes(iconSet);
   } catch (error) {
     shapes = {};
-    pathOutput.innerHTML = `<span class="error">${setName}: ${(error as Error).message}</span>`;
+    pathOutput.innerHTML = `<span class="error">${iconSetName}: ${(error as Error).message}</span>`;
   }
-  morphPath.setAttribute('stroke-width', String(iconSet.strokeWidth));
-  morphPath.setAttribute('stroke-linecap', iconSet.lineCap);
-  morphPath.setAttribute('stroke-linejoin', iconSet.lineJoin);
-
-  digitButtons.replaceChildren();
-  for (const digit of DIGITS) {
-    const button = document.createElement('button');
-    const shape = shapes[digit];
-    button.dataset.digit = digit;
-    button.title = shape ? `Morph to ${digit}` : `${digit}: not drawn yet`;
-    button.classList.toggle('not-drawn', !shape);
-    button.innerHTML = shape
-      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${iconSet.strokeWidth}" stroke-linecap="${iconSet.lineCap}" stroke-linejoin="${iconSet.lineJoin}"><path d="${toPathData(shape)}"/></svg>`
-      : digit;
-    button.onclick = () => {
-      autoPlayToggle.checked = false;
-      setAutoPlay(false);
-      goTo(digit);
-    };
-    digitButtons.appendChild(button);
-  }
+  const states = statesOf(iconSet);
+  const state = keepState && states.includes(targetState) ? targetState : states[0];
+  targetState = state;
   currentPath = null;
-  goTo('0');
+  buildStateButtons();
+  goTo(state);
   showProgress(1);
-  cellWidthInput.value = String(iconSet.textLayout.cellWidth);
-  spacingInput.value = String(iconSet.textLayout.spacing);
+  applyStyle();
+}
+
+function selectIconSet(setName: IconSetName): void {
+  setAutoPlay(false);
+  iconSetName = setName;
+  settings.write(`set.${tab}`, setName);
+  for (const button of setButtons.querySelectorAll<HTMLButtonElement>('button')) {
+    button.classList.toggle('active', button.dataset.set === setName);
+  }
+  const { textLayout } = iconSets[setName];
+  if (textLayout) {
+    cellWidthInput.value = String(textLayout.cellWidth);
+    spacingInput.value = String(textLayout.spacing);
+  }
+  loadIconSet(false);
+}
+
+function selectTab(nextTab: Tab): void {
+  tab = nextTab;
+  settings.write('tab', tab);
+  history.replaceState(null, '', `#${tab}`);
+  for (const button of tabButtons.querySelectorAll<HTMLButtonElement>('button')) {
+    button.classList.toggle('active', button.dataset.tab === tab);
+  }
+  setButtons.replaceChildren(...setsOfTab(tab).map((setName) => {
+    const button = document.createElement('button');
+    button.dataset.set = setName;
+    button.textContent = setName[0].toUpperCase() + setName.slice(1);
+    button.onclick = () => selectIconSet(setName);
+    return button;
+  }));
+  textPreview.hidden = tab !== 'digits';
+  if (tab !== 'digits') setLiveClock(false);
+  const remembered = settings.read(`set.${tab}`) as IconSetName | null;
+  selectIconSet(remembered && setsOfTab(tab).includes(remembered) ? remembered : DEFAULT_SETS[tab]);
+}
+
+// ---- style panel ----
+
+function buildSegmented<Value extends string>(container: HTMLElement, values: Value[], onPick: (value: Value) => void): void {
+  container.replaceChildren(...values.map((value) => {
+    const button = document.createElement('button');
+    button.dataset.value = value;
+    button.textContent = value;
+    button.onclick = () => onPick(value);
+    return button;
+  }));
+}
+const markSegmented = (container: HTMLElement, value: string) => {
+  for (const button of container.querySelectorAll<HTMLButtonElement>('button')) button.classList.toggle('active', button.dataset.value === value);
+};
+const showReset = (key: keyof StyleChoices, visible: boolean) =>
+  document.querySelector(`[data-reset="${key}"]`)?.classList.toggle('visible', visible);
+
+/** Shows the current choices in the panel and applies them to the stage, the buttons and the text line. */
+function applyStyle(): void {
+  settings.write('style', JSON.stringify(style));
+  const fixedWidth = hasFixedWidth();
+  Object.assign(strokeWidthInput, fixedWidth ? { min: '0.5', max: '8', step: '0.25' } : { min: '0.25', max: '4', step: '0.05' });
+  const strokeWidth = fixedWidth ? parseFloat(String(style.strokeWidth)) : Number(style.strokeWidth ?? iconSet.strokeWidth);
+  strokeWidthInput.value = String(strokeWidth);
+  strokeWidthOutput.textContent = fixedWidth ? `${strokeWidth}px` : strokeWidth.toFixed(2);
+  markSegmented(strokeUnitButtons, fixedWidth ? 'px' : 'grid units');
+  markSegmented(lineCapButtons, style.lineCap ?? iconSet.lineCap);
+  markSegmented(lineJoinButtons, style.lineJoin ?? iconSet.lineJoin);
+  markSegmented(fillButtons, style.fill ? 'on' : 'off');
+  const hasRoundness = Boolean(iconSets[iconSetName].withRoundness);
+  roundnessRow.classList.toggle('disabled', !hasRoundness);
+  roundnessRow.title = hasRoundness ? '' : 'This set has no adjustable roundness';
+  const roundness = style.roundness ?? 1;
+  roundnessInput.value = String(roundness);
+  roundnessOutput.textContent = roundness === 1 ? 'own' : roundness.toFixed(2);
+  // line join only changes sharp corners: digit sets have some, icons only at roundness 0
+  const lineJoinMatters = !hasRoundness || roundness === 0;
+  for (const element of [lineJoinLabel, lineJoinButtons]) element.classList.toggle('disabled', !lineJoinMatters);
+  lineJoinHint.hidden = lineJoinMatters;
+  for (const key of ['strokeWidth', 'lineCap', 'lineJoin', 'roundness'] as const) showReset(key, style[key] !== undefined);
+
+  for (const [name, value] of Object.entries(svgStyleAttributes())) morphPath.setAttribute(name, value);
+  for (const path of stateButtons.querySelectorAll('path')) {
+    for (const [name, value] of Object.entries(svgStyleAttributes())) path.setAttribute(name, value);
+  }
   buildTextLine();
+}
+
+function changeStyle(change: Partial<StyleChoices>): void {
+  const roundnessChanged = 'roundness' in change && change.roundness !== style.roundness;
+  style = { ...style, ...change };
+  for (const key of Object.keys(style) as (keyof StyleChoices)[]) if (style[key] === undefined) delete style[key];
+  if (roundnessChanged) loadIconSet(true);
+  else applyStyle();
 }
 
 function setColor(color: string): void {
   const normalized = color.toLowerCase();
   document.documentElement.style.setProperty('--stroke', normalized);
   colorInput.value = normalized;
-  colorOutput.textContent = normalized;
   for (const button of colorSwatches.querySelectorAll<HTMLButtonElement>('button')) {
     button.classList.toggle('active', button.dataset.color === normalized);
   }
@@ -218,20 +358,26 @@ function showGrid(on: boolean): void {
   settings.write('grid', on ? '1' : '');
 }
 
-// ---- text preview: the library's text(); changed digits morph ----
+// ---- text line: the library's text(); changed digits morph ----
 
 let textLineControl: Text | null = null;
 let liveClockTimer = 0;
 
-/** Rebuilds the line (new set, or a cell width / spacing / size slider moved). */
+/** Rebuilds the line (new set or style, or a cell width / spacing / size slider moved). */
 function buildTextLine(): void {
   textLineControl?.destroy();
+  textLineControl = null;
+  if (!iconSet.textLayout || tab !== 'digits') return;
   textLineControl = text(textLine, {
     set: iconSet,
     value: textInput.value,
     size: `${textSizeInput.value}px`,
     cellWidth: Number(cellWidthInput.value),
     spacing: Number(spacingInput.value),
+    strokeWidth: style.strokeWidth,
+    lineCap: style.lineCap,
+    lineJoin: style.lineJoin,
+    fill: style.fill,
   });
   cellWidthOutput.textContent = cellWidthInput.value;
   spacingOutput.textContent = spacingInput.value;
@@ -258,16 +404,21 @@ function setLiveClock(on: boolean): void {
 
 // ---- wiring ----
 
-for (const setName of Object.keys(ICON_SETS)) {
-  const button = document.createElement('button');
-  button.dataset.set = setName;
-  button.textContent = setName[0].toUpperCase() + setName.slice(1);
-  button.onclick = () => selectIconSet(setName);
-  setButtons.appendChild(button);
-}
+for (const button of tabButtons.querySelectorAll<HTMLButtonElement>('button')) button.onclick = () => selectTab(button.dataset.tab as Tab);
 
 for (const easingName of Object.keys(easings)) easingSelect.add(new Option(easingName, easingName));
 easingSelect.value = 'easeInOutCubic' satisfies EasingName;
+durationInput.oninput = () => {
+  durationOutput.textContent = `${durationInput.value}ms`;
+  if (autoPlayToggle.checked) setAutoPlay(true);
+};
+autoPlayToggle.onchange = () => setAutoPlay(autoPlayToggle.checked);
+progressInput.oninput = () => {
+  stopRunningAnimation();
+  const progress = Number(progressInput.value);
+  progressOutput.textContent = progress.toFixed(2);
+  if (morphFrom && morphTo) render(blend(morphFrom, morphTo, easing()(progress), spinAngle));
+};
 
 for (const color of PRESET_COLORS) {
   const button = document.createElement('button');
@@ -280,17 +431,20 @@ for (const color of PRESET_COLORS) {
 colorInput.oninput = () => setColor(colorInput.value);
 setColor(settings.read('color') ?? PRESET_COLORS[0]);
 
-durationInput.oninput = () => {
-  durationOutput.textContent = `${durationInput.value}ms`;
-  if (autoPlayToggle.checked) setAutoPlay(true);
-};
-progressInput.oninput = () => {
-  stopRunningAnimation();
-  const progress = Number(progressInput.value);
-  progressOutput.textContent = progress.toFixed(2);
-  if (morphFrom && morphTo) render(blend(morphFrom, morphTo, easings[easingSelect.value as EasingName](progress), spinAngle));
-};
-autoPlayToggle.onchange = () => setAutoPlay(autoPlayToggle.checked);
+strokeWidthInput.oninput = () => changeStyle({ strokeWidth: hasFixedWidth() ? `${strokeWidthInput.value}px` : Number(strokeWidthInput.value) });
+// px starts at 3px; back to grid units = the set's own width
+buildSegmented(strokeUnitButtons, ['grid units', 'px'], (unit) => {
+  if ((unit === 'px') !== hasFixedWidth()) changeStyle({ strokeWidth: unit === 'px' ? '3px' : undefined });
+});
+buildSegmented(lineCapButtons, LINE_CAPS, (lineCap) => changeStyle({ lineCap }));
+buildSegmented(lineJoinButtons, LINE_JOINS, (lineJoin) => changeStyle({ lineJoin }));
+buildSegmented(fillButtons, ['off', 'on'], (value) => changeStyle({ fill: value === 'on' || undefined }));
+// roundness 1 = the icon's own corners = no override
+roundnessInput.oninput = () => changeStyle({ roundness: Number(roundnessInput.value) < 1 ? Number(roundnessInput.value) : undefined });
+for (const button of document.querySelectorAll<HTMLButtonElement>('[data-reset]')) {
+  button.onclick = () => changeStyle({ [button.dataset.reset as keyof StyleChoices]: undefined });
+}
+
 gridToggle.onchange = () => showGrid(gridToggle.checked);
 showGrid(Boolean(settings.read('grid')));
 debugToggle.onchange = () => {
@@ -314,5 +468,6 @@ textSizeInput.oninput = () => {
 };
 liveClockToggle.onchange = () => setLiveClock(liveClockToggle.checked);
 
-const rememberedSet = settings.read('set');
-selectIconSet(rememberedSet && rememberedSet in ICON_SETS ? rememberedSet : DEFAULT_SET);
+// the address (#icons / #digits) wins over the remembered tab
+const tabFromAddress = location.hash.slice(1);
+selectTab((tabFromAddress || settings.read('tab')) === 'icons' ? 'icons' : 'digits');

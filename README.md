@@ -33,7 +33,18 @@ digit.to('8', { onEnd: (result) => {} });     // or pass a callback
 digit.destroy();                              // stops and removes it (e.g. when a component unmounts)
 ```
 
-States: `'0'`…`'9'`, `'-'`, and `' '` (empty: nothing drawn, shapes grow out of it and fade).
+States of the digit sets: `'0'`…`'9'`, `'-'`, and `' '` (empty: nothing drawn, shapes grow out of it and fade).
+
+Icon sets (based on [Lucide](https://lucide.dev)):
+
+| Set | States |
+| --- | --- |
+| `media` | `play`, `pause`, `stop` |
+
+```ts
+const player = icon(button, { set: 'media', state: 'play' });
+player.to('pause');
+```
 
 ## A line of characters: `text(element, options)`
 
@@ -54,11 +65,16 @@ clock.destroy();
 
 | Option | For | Default | |
 | --- | --- | --- | --- |
-| `set` | both | `'round'` | `'round'`, `'square'`, `'condensed'`, `'slim'`, `'handwritten'` |
+| `set` | both | `'round'` | digits: `'round'`, `'square'`, `'condensed'`, `'slim'`, `'handwritten'`; icons (`icon()` only): `'media'` |
 | `state` / `value` | icon / text | empty | What is shown first |
 | `size` | both | `'1em'` | CSS size (icon: width and height; text: height). `1em` follows the font size |
 | `duration` | both | `400` | Milliseconds |
 | `easing` | both | `'easeInOutCubic'` | `'linear'`, `'easeInOutCubic'`, `'easeOutBack'`, `'easeOutElastic'`, or a function `(progress) => easedProgress` |
+| `strokeWidth` | both | per set | Line width. A number is in grid units (an icon is 24 × 24; digits use about 1.1–1.6, icon sets 1.78) and scales with the size; a CSS length (`'2px'`, `'0.1rem'`, `'0.08em'`) stays that wide at any size |
+| `lineCap` | both | per set | `'round'`, `'butt'`, `'square'` |
+| `lineJoin` | both | per set | `'round'`, `'miter'`, `'bevel'` |
+| `fill` | both | `false` | `true` fills closed shapes with the CSS color, or pass a CSS color |
+| `roundness` | icon | `1` | Corner roundness: `0` = sharp … `1` = the icon's own corners (the maximum). Icon sets only |
 | `cellWidth` | text | per set | Width of a digit cell in grid units (a digit is 16 high) |
 | `spacing` | text | per set | Gap between cells in grid units |
 
@@ -87,4 +103,5 @@ npm run build      # src/ → dist/
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). The icon sets are based on [Lucide](https://lucide.dev) icons (ISC; some from Feather, MIT):
+see [LICENSE-lucide](LICENSE-lucide).

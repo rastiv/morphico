@@ -3,12 +3,15 @@ import { resolveIconSet } from './iconSets.ts';
 import type { IconSetName } from './iconSets.ts';
 import { createMorphingPath, EMPTY_STATE, hasState } from './morph.ts';
 import type { MorphOptions, MorphResult } from './morph.ts';
-import { createIconSvg, createSvgElement } from './svg.ts';
+import { createIconSvg, createStrokedElement } from './svg.ts';
+import type { StyleOptions } from './svg.ts';
 import type { IconSet } from './types.ts';
 
-export interface IconOptions extends MorphOptions {
+export interface IconOptions extends MorphOptions, StyleOptions {
   /** A built-in set by name (default `'round'`) or a set object. */
   set?: IconSetName | IconSet;
+  /** Corner roundness: 0 = sharp … 1 = the icon's own corners (default, also the maximum). Icon sets only. */
+  roundness?: number;
   /** The state shown first (default: empty, `' '`). */
   state?: string;
   /** CSS width and height of the icon (default `'1em'`: it follows the font size). */
@@ -40,13 +43,17 @@ const checkedState = (iconSet: IconSet, state: string): string => {
 
 /** Adds a morphing icon (an <svg>) to `element`. */
 export const icon = (element: Element, options: IconOptions = {}): Icon => {
-  const { set, state = EMPTY_STATE, size = '1em', ...defaultMorphOptions } = options;
-  const iconSet = resolveIconSet(set);
-  const svg = createIconSvg(iconSet, '0 0 24 24');
+  const {
+    set, state = EMPTY_STATE, size = '1em', roundness, strokeWidth, lineCap, lineJoin, fill, ...defaultMorphOptions
+  } = options;
+  const iconSet = resolveIconSet(set, roundness);
+  const style: StyleOptions = { strokeWidth, lineCap, lineJoin, fill };
+  const svg = createIconSvg(iconSet, '0 0 24 24', style);
   svg.setAttribute('role', 'img');
   svg.style.width = size;
   svg.style.height = size;
-  const pathElement = svg.appendChild(createSvgElement('path'));
+  svg.style.overflow = 'visible'; // sharp tips (roundness 0, miter joins) may reach past the 24 × 24 box
+  const pathElement = svg.appendChild(createStrokedElement('path', style));
   const morphingPath = createMorphingPath(pathElement, iconSet, checkedState(iconSet, state));
   const updateLabel = () => svg.setAttribute('aria-label', morphingPath.state.trim());
   updateLabel();

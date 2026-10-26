@@ -1,18 +1,27 @@
 // Optimizer: searches better pair layouts for morph pairs.
-// Usage: node tools/check.ts <set> A B C ... [--tracing=<name>]
+// Usage: node tools/check.ts <set> A B C ... [--tracing=<name>] [--piece=<index>]
 //   → pairs A→B, A→C, …; prints the cost before → after and the pairLayouts entries that reach it.
 // Put closed shapes (loops) second: only the second state gets start segments tried.
 // --tracing=<name>: also lays out the second state along alternativeStrokes[name] (fitted against A as is / reversed).
-import { defaultShapes, layoutStrokes, reorderSegments, segmentCountOf, strokePiece } from '../src/geometry.ts';
+// --piece=<index>: sets with several pieces are tuned one piece at a time (default 0 = the set's own strokes;
+//   1 = morePieces[0], …); the printed entries go into that piece's pairLayouts.
+import {
+  defaultShapes, layoutStrokes, pieceLengthOf, piecesOf, reorderSegments, segmentCountOf, splitPieces, strokePiece,
+} from '../src/geometry.ts';
 import type { PairLayout, PathNumbers, Stroke } from '../src/types.ts';
 import { loadIconSet, morphCost } from './shared.ts';
 
 const options = process.argv.slice(2).filter((argument) => argument.startsWith('--'));
 const tracing = options.find((option) => option.startsWith('--tracing='))?.slice('--tracing='.length);
+const pieceIndex = Number(options.find((option) => option.startsWith('--piece='))?.slice('--piece='.length) ?? 0);
 const [setName, state, ...otherStates] = process.argv.slice(2).filter((argument) => !argument.startsWith('--'));
 if (!setName || state === undefined) throw new Error('usage: node tools/check.ts <set> A B C ... [--tracing=<name>]');
 const iconSet = await loadIconSet(setName);
-const shapes = defaultShapes(iconSet);
+const pieceSet = piecesOf(iconSet)[pieceIndex];
+if (!pieceSet) throw new Error(`${setName} has no piece ${pieceIndex}`);
+// the chosen piece of every state
+const shapes = Object.fromEntries(Object.entries(defaultShapes(iconSet))
+  .map(([someState, path]) => [someState, splitPieces(path, pieceLengthOf(iconSet))[pieceIndex]]));
 
 const CANDIDATES_PER_STROKE = 48;
 const EPSILON = 1e-9;
@@ -97,19 +106,19 @@ for (const otherState of otherStates) {
 
   for (const other of reorderings(otherState)) {
     // re-lay `state` against this reordering of `otherState` …
-    const fitted = fitBreakpoints(iconSet.strokes[state], other.path);
+    const fitted = fitBreakpoints(pieceSet.strokes[state], other.path);
     consider(fitted.cost, describe({ breakpoints: fitted.breakpoints }, otherState, other.pairLayout));
     if (other.pairLayout.startSegment !== undefined) continue;
     const reversed = other.pairLayout.reversed ?? false;
     // … then re-lay `otherState` against that new `state`
-    const refitted = fitBreakpoints(iconSet.strokes[otherState], reversed ? reversedPath(fitted.path) : fitted.path);
+    const refitted = fitBreakpoints(pieceSet.strokes[otherState], reversed ? reversedPath(fitted.path) : fitted.path);
     consider(refitted.cost, describe({ breakpoints: fitted.breakpoints, ...(reversed && { reversed }) }, otherState, { breakpoints: refitted.breakpoints }));
     // re-lay `otherState` against the unchanged `state`
-    const fittedOther = fitBreakpoints(iconSet.strokes[otherState], reversed ? reversedPath(shapes[state]) : shapes[state]);
+    const fittedOther = fitBreakpoints(pieceSet.strokes[otherState], reversed ? reversedPath(shapes[state]) : shapes[state]);
     consider(fittedOther.cost, describe(reversed ? { reversed } : {}, otherState, { breakpoints: fittedOther.breakpoints }));
   }
   if (tracing) {
-    const tracingStrokes = iconSet.alternativeStrokes[tracing];
+    const tracingStrokes = pieceSet.alternativeStrokes[tracing];
     if (!tracingStrokes) throw new Error(`${setName} has no alternative tracing "${tracing}"`);
     for (const reversed of [false, true]) {
       const fitted = fitBreakpoints(tracingStrokes, reversed ? reversedPath(shapes[state]) : shapes[state]);

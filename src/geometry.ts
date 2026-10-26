@@ -1,6 +1,6 @@
 // Geometry: strokes (lines, arcs, cubics) → cubic path numbers, plus the pair layouts that improve morphs.
 // Pure functions, no DOM access: safe to import anywhere (browser, Node, SSR).
-import type { ArcStroke, CubicSegment, IconSet, PairLayout, PathNumbers, Point, Stroke } from './types.ts';
+import type { ArcStroke, CubicSegment, IconSet, PairLayout, PathNumbers, PieceSet, Point, Stroke } from './types.ts';
 
 const DEGREE = Math.PI / 180;
 const ICON_CENTER = 12;
@@ -81,6 +81,40 @@ export const roundedPolyline = (points: Point[], radii: number | number[]): Stro
   return strokes;
 };
 
+/**
+ * A closed polygon with every corner rounded by `radius` (clamped per corner so neighbouring arcs never overlap).
+ * Always a line and an arc per corner, whatever the radius, so pair layouts (stroke indices) stay valid; at radius 0
+ * the arc shrinks to the corner point, so the corner is really sharp (and `stroke-linejoin` decides how it looks).
+ * Starts after the first corner with a line (`startsWithArc`: with the arc of the first corner), clockwise if the
+ * corners are listed clockwise on screen.
+ */
+export const roundedPolygon = (corners: Point[], radius: number, startsWithArc = false): Stroke[] => {
+  const cornerCount = corners.length;
+  const roundedCorners = corners.map((corner, index) => {
+    const previous = corners[(index + cornerCount - 1) % cornerCount], next = corners[(index + 1) % cornerCount];
+    const incoming = unitVector(previous, corner), outgoing = unitVector(corner, next);
+    const turn = Math.atan2(incoming[0] * outgoing[1] - incoming[1] * outgoing[0], incoming[0] * outgoing[0] + incoming[1] * outgoing[1]);
+    const halfTurnTangent = Math.tan(Math.abs(turn) / 2);
+    const shortestHalfEdge = Math.min(distanceBetween(previous, corner), distanceBetween(corner, next)) / 2;
+    const cornerRadius = Math.max(0, Math.min(radius, shortestHalfEdge / halfTurnTangent));
+    const tangentDistance = cornerRadius * halfTurnTangent;
+    const arcStart: Point = [corner[0] - incoming[0] * tangentDistance, corner[1] - incoming[1] * tangentDistance];
+    const arcEnd: Point = [corner[0] + outgoing[0] * tangentDistance, corner[1] + outgoing[1] * tangentDistance];
+    const inward: Point = turn > 0 ? [-incoming[1], incoming[0]] : [incoming[1], -incoming[0]];
+    const center: Point = [arcStart[0] + inward[0] * cornerRadius, arcStart[1] + inward[1] * cornerRadius];
+    const startAngle = Math.atan2(arcStart[1] - center[1], arcStart[0] - center[0]) / DEGREE;
+    return { arcStart, arcEnd, arc: arc(center[0], center[1], cornerRadius, startAngle, startAngle + turn / DEGREE) };
+  });
+  const strokes = roundedCorners.flatMap((roundedCorner, index) => {
+    const next = roundedCorners[(index + 1) % cornerCount];
+    return [line(...roundedCorner.arcEnd, ...next.arcStart), next.arc];
+  });
+  // the list above starts after corner 0 with a line and ends with corner 0's arc
+  return startsWithArc ? [strokes[strokes.length - 1], ...strokes.slice(0, -1)] : strokes;
+};
+
+const distanceBetween = (from: Point, to: Point): number => Math.hypot(to[0] - from[0], to[1] - from[1]);
+
 const unitVector = (from: Point, to: Point): Point => {
   const length = Math.hypot(to[0] - from[0], to[1] - from[1]);
   return [(to[0] - from[0]) / length, (to[1] - from[1]) / length];
@@ -120,11 +154,34 @@ export const interpolate = (from: PathNumbers, to: PathNumbers, progress: number
 
 const formatNumber = (value: number): string => String(+value.toFixed(3));
 
-/** SVG `d` attribute: `M x y` followed by one `C` per segment. */
-export const toPathData = (path: PathNumbers): string =>
-  `M${formatNumber(path[0])} ${formatNumber(path[1])}` + toSegments(path)
-    .map(([, control1, control2, end]) => `C${[...control1, ...control2, ...end].map(formatNumber).join(' ')}`)
-    .join('');
+/** A piece whose end lands on its start is closed (`Z`): its first corner then gets the line join, not two line ends. */
+const isClosedPiece = (piece: PathNumbers): boolean =>
+  Math.hypot(piece[piece.length - 2] - piece[0], piece[piece.length - 1] - piece[1]) < 1e-6;
+
+const hasLength = ([start, control1, control2, end]: CubicSegment): boolean =>
+  [control1, control2, end].some((point) => Math.hypot(point[0] - start[0], point[1] - start[1]) > 1e-6);
+
+/**
+ * The segments of a piece as written to SVG. A closed piece starts at its first segment with length: a zero-length
+ * first segment (a corner of radius 0) has no direction, so browsers would draw the closing corner wrongly.
+ * Only the written order changes, not the picture.
+ */
+const writtenSegments = (piece: PathNumbers): CubicSegment[] => {
+  const segments = toSegments(piece);
+  if (!isClosedPiece(piece)) return segments;
+  const firstWithLength = Math.max(0, segments.findIndex(hasLength));
+  return [...segments.slice(firstWithLength), ...segments.slice(0, firstWithLength)];
+};
+
+/** SVG `d` attribute: per piece `M x y` followed by one `C` per segment (`pieceLength`: see pieceLengthOf). */
+export const toPathData = (path: PathNumbers, pieceLength = path.length): string =>
+  splitPieces(path, pieceLength).map((piece) => {
+    const segments = writtenSegments(piece);
+    const [startX, startY] = segments[0][0];
+    return `M${formatNumber(startX)} ${formatNumber(startY)}` + segments
+      .map(([, control1, control2, end]) => `C${[...control1, ...control2, ...end].map(formatNumber).join(' ')}`)
+      .join('') + (isClosedPiece(piece) ? 'Z' : '');
+  }).join('');
 
 /** Shrinks (factor < 1) or grows the whole shape around the icon center (12, 12). */
 export const scaleAroundCenter = (path: PathNumbers, factor: number): PathNumbers =>
@@ -246,19 +303,43 @@ export const defaultBreakpoints = (strokes: Stroke[], segmentCount: number): num
 
 // ---- icon sets ----
 
+// A shape of a set with several pieces is the path numbers of every piece one after another.
+
+/** The set itself is the first piece. */
+export const piecesOf = (iconSet: IconSet): PieceSet[] => [iconSet, ...(iconSet.morePieces ?? [])];
+
+/** Path numbers of one piece: start point + 6 per segment. */
+export const pieceLengthOf = (iconSet: IconSet): number => 2 + 6 * iconSet.segmentCount;
+
+/** Splits a shape into the path numbers of its pieces. */
+export const splitPieces = (path: PathNumbers, pieceLength: number): PathNumbers[] =>
+  Array.from({ length: path.length / pieceLength }, (_, pieceIndex) =>
+    path.slice(pieceIndex * pieceLength, (pieceIndex + 1) * pieceLength));
+
+const strokesOf = (pieceSet: PieceSet, state: string, pieceIndex: number): Stroke[] => {
+  const strokes = pieceSet.strokes[state];
+  if (!strokes) throw new Error(`state "${state}" has no strokes in piece ${pieceIndex}`);
+  return strokes;
+};
+
 /** Every state of the set laid out with its default breakpoints. */
 export const defaultShapes = (iconSet: IconSet): Record<string, PathNumbers> =>
-  Object.fromEntries(Object.entries(iconSet.strokes)
-    .map(([state, strokes]) => [state, layoutStrokes(strokes, defaultBreakpoints(strokes, iconSet.segmentCount))]));
+  Object.fromEntries(Object.keys(iconSet.strokes).map((state) => [state, piecesOf(iconSet).flatMap((pieceSet, pieceIndex) => {
+    const strokes = strokesOf(pieceSet, state, pieceIndex);
+    return layoutStrokes(strokes, defaultBreakpoints(strokes, iconSet.segmentCount));
+  })]));
 
-/** The shape of `state` laid out for morphing to or from `otherState`. */
+/** The shape of `state` laid out for morphing to or from `otherState` (each piece by its own pair layout). */
 export const shapeForPair = (
   iconSet: IconSet, shapes: Record<string, PathNumbers>, state: string, otherState: string,
 ): PathNumbers => {
-  const pairLayout = iconSet.pairLayouts[state]?.[otherState];
-  if (!pairLayout) return shapes[state];
-  const strokes = pairLayout.tracing ? iconSet.alternativeStrokes[pairLayout.tracing] : iconSet.strokes[state];
-  const laidOut = pairLayout.breakpoints ? layoutStrokes(strokes, pairLayout.breakpoints) : shapes[state];
-  const reordered = reorderSegments(laidOut, pairLayout);
-  return pairLayout.rotation ? rotateAroundCenter(reordered, pairLayout.rotation) : reordered;
+  const defaultPieces = splitPieces(shapes[state], pieceLengthOf(iconSet));
+  return piecesOf(iconSet).flatMap((pieceSet, pieceIndex) => {
+    const pairLayout = pieceSet.pairLayouts[state]?.[otherState];
+    if (!pairLayout) return defaultPieces[pieceIndex];
+    const strokes = pairLayout.tracing ? pieceSet.alternativeStrokes[pairLayout.tracing] : strokesOf(pieceSet, state, pieceIndex);
+    const laidOut = pairLayout.breakpoints ? layoutStrokes(strokes, pairLayout.breakpoints) : defaultPieces[pieceIndex];
+    const reordered = reorderSegments(laidOut, pairLayout);
+    return pairLayout.rotation ? rotateAroundCenter(reordered, pairLayout.rotation) : reordered;
+  });
 };

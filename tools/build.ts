@@ -51,7 +51,7 @@ const body = modules.map(({ file, code }) => {
   return `${heading}\nconst { ${names} } = (() => {\n${joinable}\nreturn { ${names} };\n})();`;
 }).join('\n\n').replace(/(const version = )'dev'/, `$1'${packageJson.version}'`);
 
-const banner = `/*! morphico v${packageJson.version} | ${packageJson.license} License */\n`;
+const banner = `/*! morphico v${packageJson.version} | ${packageJson.license} License | icons based on Lucide (ISC, https://lucide.dev), see LICENSE-lucide */\n`;
 const exportList = exportedNames.join(', ');
 fs.mkdirSync('dist');
 fs.writeFileSync('dist/morphico.mjs', `${banner}${body}\n\nexport { ${exportList} };\n`);

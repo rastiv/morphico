@@ -1,7 +1,9 @@
 // One SVG <path> that morphs between the states of an icon set. Shared by icon() and every text() cell.
 import { animate, easings } from './engine.ts';
 import type { Easing } from './engine.ts';
-import { defaultShapes, interpolate, rotateAroundCenter, scaleAroundCenter, shapeForPair, toPathData } from './geometry.ts';
+import {
+  defaultShapes, interpolate, pieceLengthOf, rotateAroundCenter, scaleAroundCenter, shapeForPair, toPathData,
+} from './geometry.ts';
 import type { IconSet, PathNumbers } from './types.ts';
 
 export type EasingName = keyof typeof easings;
@@ -59,6 +61,7 @@ export interface MorphingPath {
 
 export const createMorphingPath = (pathElement: SVGPathElement, iconSet: IconSet, initialState: string): MorphingPath => {
   const shapes = shapesOf(iconSet);
+  const pieceLength = pieceLengthOf(iconSet);
   let state = initialState;
   let currentPath: PathNumbers | null = null; // null while empty
   let currentOpacity = 0;
@@ -67,7 +70,7 @@ export const createMorphingPath = (pathElement: SVGPathElement, iconSet: IconSet
   const render = (path: PathNumbers | null, opacity: number): void => {
     currentPath = path;
     currentOpacity = path ? clampToUnit(opacity) : 0;
-    if (path) pathElement.setAttribute('d', toPathData(path));
+    if (path) pathElement.setAttribute('d', toPathData(path, pieceLength));
     else pathElement.removeAttribute('d');
     if (currentOpacity < 1) pathElement.setAttribute('opacity', String(+currentOpacity.toFixed(3)));
     else pathElement.removeAttribute('opacity');

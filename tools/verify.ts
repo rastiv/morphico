@@ -1,7 +1,7 @@
 // Verifies a set's pair layouts: number count, continuity, shape deviation from the default layout
 // (≤ ~0.12 is sampling noise, more means the picture changed) and morph cost before → after.
 // Usage: node tools/verify.ts <set> [states...]   (default: all pairs)
-import { defaultShapes, rotateAroundCenter, shapeForPair, toSegments } from '../src/geometry.ts';
+import { defaultShapes, pieceLengthOf, piecesOf, rotateAroundCenter, shapeForPair, splitPieces, toSegments } from '../src/geometry.ts';
 import type { PathNumbers, Point } from '../src/types.ts';
 import { loadIconSet, morphCost } from './shared.ts';
 
@@ -15,9 +15,11 @@ if (!states.length) {
   process.exit();
 }
 
-/** Points along the whole path, `samplesPerSegment + 1` per segment. */
+const pieceLength = pieceLengthOf(iconSet);
+
+/** Points along every piece of the path, `samplesPerSegment + 1` per segment. */
 const samplePoints = (path: PathNumbers, samplesPerSegment = 60): Point[] =>
-  toSegments(path).flatMap(([start, control1, control2, end]) => Array.from({ length: samplesPerSegment + 1 }, (_, sample): Point => {
+  splitPieces(path, pieceLength).flatMap(toSegments).flatMap(([start, control1, control2, end]) => Array.from({ length: samplesPerSegment + 1 }, (_, sample): Point => {
     const progress = sample / samplesPerSegment, remaining = 1 - progress;
     const weights = [remaining ** 3, 3 * remaining ** 2 * progress, 3 * remaining * progress ** 2, progress ** 3];
     const along = (axis: 0 | 1) => weights[0] * start[axis] + weights[1] * control1[axis] + weights[2] * control2[axis] + weights[3] * end[axis];
@@ -31,11 +33,11 @@ const hausdorffDistance = (shapeA: Point[], shapeB: Point[]) => {
   return Math.max(oneWay(shapeA, shapeB), oneWay(shapeB, shapeA));
 };
 
-const isContinuous = (path: PathNumbers) => toSegments(path).every((segment, index, segments) =>
-  index === 0 || segments[index - 1][3].every((value, axis) => Math.abs(value - segment[0][axis]) < 1e-6));
+const isContinuous = (path: PathNumbers) => splitPieces(path, pieceLength).every((piece) => toSegments(piece).every((segment, index, segments) =>
+  index === 0 || segments[index - 1][3].every((value, axis) => Math.abs(value - segment[0][axis]) < 1e-6)));
 
 const referencePoints = Object.fromEntries(states.map((state) => [state, samplePoints(shapes[state], 400)]));
-const expectedLength = 2 + iconSet.segmentCount * 6;
+const expectedLength = pieceLength * piecesOf(iconSet).length;
 for (const state of onlyStates.length ? onlyStates : states) {
   for (const otherState of states) {
     if (state === otherState || (!onlyStates.length && states.indexOf(otherState) < states.indexOf(state))) continue;

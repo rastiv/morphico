@@ -4,8 +4,9 @@ import { resolveIconSet } from './iconSets.ts';
 import type { IconSetName } from './iconSets.ts';
 import { createMorphingPath, hasState } from './morph.ts';
 import type { MorphingPath, MorphOptions } from './morph.ts';
-import { createIconSvg, createSvgElement } from './svg.ts';
-import type { IconSet } from './types.ts';
+import { createIconSvg, createStrokedElement, hasFixedStrokeWidth } from './svg.ts';
+import type { StyleOptions } from './svg.ts';
+import type { IconSet, TextLayout } from './types.ts';
 
 /** Characters `text()` can show: digits, `-` and space morph; `:` `.` `,` `/` stay still. Anything else is removed. */
 const UNSUPPORTED_CHARACTERS = /[^0-9 :.,\/-]/g;
@@ -13,10 +14,10 @@ const UNSUPPORTED_CHARACTERS = /[^0-9 :.,\/-]/g;
 /** Vertical part of the 24×24 grid shown in a cell: y 3…21 holds every digit including its stroke. */
 const CELL_TOP = 3;
 const CELL_HEIGHT = 18;
-/** Dot radius of `:` `.` `,` relative to the stroke width. */
-const DOT_SIZE = 0.6;
+/** Dot diameter of `:` `.` `,` relative to the stroke width. */
+const DOT_SIZE = 1.2;
 
-export interface TextOptions extends MorphOptions {
+export interface TextOptions extends MorphOptions, StyleOptions {
   /** A built-in set by name (default `'round'`) or a set object. */
   set?: IconSetName | IconSet;
   /** The text shown first (default: empty). */
@@ -63,15 +64,24 @@ interface Cell {
 
 const formatNumber = (value: number): string => String(+value.toFixed(4));
 
-/** Draws `:` `.` `,` or `/` into the cell, matching the set's stroke width and digit positions. */
-const drawStaticCharacter = (svg: SVGSVGElement, character: string, iconSet: IconSet): void => {
-  const { baselineY, colonDotsY } = iconSet.textLayout;
-  const dotRadius = iconSet.strokeWidth * DOT_SIZE;
-  const baseDotY = baselineY + iconSet.strokeWidth / 2 - dotRadius; // dot bottom = digit bottom
-  const dot = (y: number) => svg.appendChild(createSvgElement('circle', {
-    cx: 12, cy: formatNumber(y), r: formatNumber(dotRadius), fill: 'currentColor', stroke: 'none',
-  }));
-  const line = (fromX: number, fromY: number, toX: number, toY: number) => svg.appendChild(createSvgElement('path', {
+/**
+ * Draws `:` `.` `,` or `/` into the cell, matching the stroke width and the set's digit positions.
+ * A dot is a very short round-ended line drawn thicker, so its size follows the stroke width in any unit (CSS lengths too).
+ * `unitWidth`: the stroke width in grid units, for placing the dots (the set's own width when it is a CSS length).
+ */
+const drawStaticCharacter = (
+  svg: SVGSVGElement, character: string, style: StyleOptions, unitWidth: number, textLayout: TextLayout,
+): void => {
+  const { baselineY, colonDotsY } = textLayout;
+  const dotRadius = (unitWidth * DOT_SIZE) / 2;
+  const baseDotY = baselineY + unitWidth / 2 - dotRadius; // dot bottom = digit bottom
+  const dot = (y: number) => {
+    // a very short line with round ends draws a solid dot (always round, whatever the line cap option)
+    const dotPath = svg.appendChild(createStrokedElement('path', style, { d: `M12 ${formatNumber(y)}h0.001`, 'stroke-linecap': 'round' }));
+    if (hasFixedStrokeWidth(style)) dotPath.style.strokeWidth = `calc(${DOT_SIZE} * ${style.strokeWidth})`;
+    else dotPath.setAttribute('stroke-width', formatNumber(unitWidth * DOT_SIZE));
+  };
+  const line = (fromX: number, fromY: number, toX: number, toY: number) => svg.appendChild(createStrokedElement('path', style, {
     d: `M${formatNumber(fromX)} ${formatNumber(fromY)}L${formatNumber(toX)} ${formatNumber(toY)}`,
   }));
   if (character === ':') colonDotsY.forEach(dot);
@@ -82,11 +92,17 @@ const drawStaticCharacter = (svg: SVGSVGElement, character: string, iconSet: Ico
 
 /** Adds a line of morphing characters (a <span> of <svg> cells) to `element`. */
 export const text = (element: Element, options: TextOptions = {}): Text => {
-  const { set, value: initialValue = '', size = '1em', cellWidth, spacing, ...defaultMorphOptions } = options;
+  const {
+    set, value: initialValue = '', size = '1em', cellWidth, spacing, strokeWidth, lineCap, lineJoin, fill, ...defaultMorphOptions
+  } = options;
+  const style: StyleOptions = { strokeWidth, lineCap, lineJoin, fill };
   const iconSet = resolveIconSet(set);
-  const digitCellWidth = cellWidth ?? iconSet.textLayout.cellWidth;
-  const cellSpacing = spacing ?? iconSet.textLayout.spacing;
-  const inkBottom = iconSet.textLayout.baselineY + iconSet.strokeWidth / 2;
+  const { textLayout } = iconSet;
+  if (!textLayout) throw new Error('morphico: text() needs a digit set (this set has no text layout)');
+  const digitCellWidth = cellWidth ?? textLayout.cellWidth;
+  const cellSpacing = spacing ?? textLayout.spacing;
+  const unitWidth = typeof strokeWidth === 'number' ? strokeWidth : iconSet.strokeWidth; // a CSS length: about the set's own
+  const inkBottom = textLayout.baselineY + unitWidth / 2;
   const line = document.createElement('span');
   line.setAttribute('role', 'img');
   line.style.whiteSpace = 'nowrap';
@@ -104,7 +120,7 @@ export const text = (element: Element, options: TextOptions = {}): Text => {
 
   const createCell = (character: string, index: number): Cell => {
     const width = widthOf(character);
-    const svg = createIconSvg(iconSet, `${formatNumber(12 - width / 2)} ${CELL_TOP} ${formatNumber(width)} ${CELL_HEIGHT}`);
+    const svg = createIconSvg(iconSet, `${formatNumber(12 - width / 2)} ${CELL_TOP} ${formatNumber(width)} ${CELL_HEIGHT}`, style);
     svg.setAttribute('aria-hidden', 'true');
     Object.assign(svg.style, {
       width: scaled(width),
@@ -114,8 +130,8 @@ export const text = (element: Element, options: TextOptions = {}): Text => {
       marginLeft: index ? `var(--morphico-spacing, ${scaled(cellSpacing)})` : '0',
     });
     let morphingPath: MorphingPath | null = null;
-    if (isMorphing(character)) morphingPath = createMorphingPath(svg.appendChild(createSvgElement('path')), iconSet, character);
-    else drawStaticCharacter(svg, character, iconSet);
+    if (isMorphing(character)) morphingPath = createMorphingPath(svg.appendChild(createStrokedElement('path', style)), iconSet, character);
+    else drawStaticCharacter(svg, character, style, unitWidth, textLayout);
     return { svg, morphingPath, character };
   };
 

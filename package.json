@@ -24,7 +24,8 @@
   "jsdelivr": "./dist/morphico.js",
   "unpkg": "./dist/morphico.js",
   "files": [
-    "dist"
+    "dist",
+    "LICENSE-lucide"
   ],
   "sideEffects": false,
   "scripts": {

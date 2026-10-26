@@ -3,6 +3,14 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 patch = nicer transitions and fixes, minor = new icon sets or options, major = API changes or a changed resting look of an icon.
 
+## Unreleased
+
+- New icon set `media`: `play`, `pause`, `stop` (based on Lucide, see LICENSE-lucide).
+- Icons can be made of several pieces (e.g. pause = two bars).
+- Style options for `icon()` and `text()`: `strokeWidth` (grid units, or a CSS length such as `'2px'` that stays fixed
+  at any size), `lineCap`, `lineJoin`, `fill`; `icon()` also `roundness`
+  (0 = sharp … 1 = the icon's own corners; icon sets only).
+
 ## 0.1.0
 
 - `icon(element, options)`: one morphing icon with `to(state)` and `destroy()`.

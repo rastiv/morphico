@@ -8,6 +8,7 @@ export type { Easing } from './engine.ts';
 export type { ChangeOptions, Icon, IconOptions } from './icon.ts';
 export type { IconSetName } from './iconSets.ts';
 export type { EasingName, MorphOptions, MorphResult } from './morph.ts';
+export type { StyleOptions } from './svg.ts';
 export type { SetOptions, Text, TextOptions, TextResult } from './text.ts';
 export type { IconSet, TextLayout } from './types.ts';
 
