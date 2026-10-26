@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 patch = nicer transitions and fixes, minor = new icon sets or options, major = API changes or a changed resting look of an icon.
 
-## Unreleased
+## 0.1.0
 
 - `icon(element, options)`: one morphing icon with `to(state)` and `destroy()`.
 - `text(element, options)`: a line of characters with `set(value)` and `destroy()`; only changed digits morph.
