@@ -1,5 +1,5 @@
-// Digit set v3: tall, narrow, thin "display" digits with rounded corners, drafted from the reference images in
-// icons/v3/ (the set format is described in ../types.ts).
+// Digit set "condensed": tall, narrow, thin "display" digits with rounded corners, drafted from the reference images in
+// icons/condensed/ (the set format is described in ../types.ts).
 //
 // The shapes are written on the images' own pixel grid and converted: x/y are the stroke's middle line in image
 // pixels, measured from the digit's ink box. Every digit is 94 px tall with a 6 px stroke, most are 50 px wide:
@@ -37,7 +37,7 @@ const HOOK_END_Y = 79;
 const SIX_POINTS: Point[] = [[47, 94 - HOOK_END_Y], [47, 3], [3, 3], [3, 91], [47, 91], [47, 47], [3, 47]];
 const SIX_RADII = [0, OUTER_RADIUS, OUTER_RADIUS, OUTER_RADIUS, OUTER_RADIUS, MIDDLE_RADIUS, 0];
 
-const digitsV3: IconSet = {
+const condensedDigits: IconSet = {
   segmentCount: 20,
   strokeWidth: 6 / PIXELS_PER_UNIT,
   lineCap: 'round',
@@ -75,7 +75,7 @@ const digitsV3: IconSet = {
     '8-like-0': drawn(50,
       [[25, 3], [3, 3], [3, 47], [25, 47], [3, 47], [3, 91], [47, 91], [47, 47], [25, 47], [47, 47], [47, 3], [25, 3]],
       [0, OUTER_RADIUS, MIDDLE_RADIUS, 0, MIDDLE_RADIUS, OUTER_RADIUS, OUTER_RADIUS, MIDDLE_RADIUS, 0, MIDDLE_RADIUS, OUTER_RADIUS, 0]),
-    // the 8 traced like the 3 (as in v2), starting and ending at the left part of the middle bar: around the top
+    // the 8 traced like the 3 (as in the square set), starting and ending at the left part of the middle bar: around the top
     // box, along the middle bar out to the left and back, around the bottom box
     '8-like-3': drawn(50,
       [[3 + MIDDLE_RADIUS, 47], [3, 47], [3, 3], [47, 3], [47, 47], [3 + MIDDLE_RADIUS, 47], [47, 47], [47, 91], [3, 91], [3, 47], [3 + MIDDLE_RADIUS, 47]],
@@ -126,14 +126,14 @@ const digitsV3: IconSet = {
       0: { breakpoints: [0, 0, 0, 0.0417, 0.25, 0.4375, 1, 1.125, 1.2292, 1.3542, 1.4792, 1.5833, 1.7083, 1.8542, 1.8958, 1.8958, 1.8958, 1.8958, 1.8958, 1.8958, 2] },
     },
     8: {
-      // as in v1 and v2: the 0's left and right sides move in to the middle of the 8's middle bar
+      // as in round and square: the 0's left and right sides move in to the middle of the 8's middle bar
       0: { tracing: '8-like-0', breakpoints: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9.5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19] },
       4: { startSegment: 5, reversed: true },
       5: { startSegment: 10, reversed: true },
       6: { startSegment: 3 },
       7: { breakpoints: [0, 1, 2, 3, 3.7083, 4, 4.2708, 4.4792, 4.7083, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] },
       9: { startSegment: 17 },
-      // as in v2: both ends of the 3 move to the left part of its middle bar, where the 8's boxes close
+      // as in the square set: both ends of the 3 move to the left part of its middle bar, where the 8's boxes close
       3: { tracing: '8-like-3', breakpoints: [0, 1, 2, 3, 4, 5, 6, 6.5, 7, 7.6458, 8, 8.3542, 9, 9.5, 10, 11, 12, 13, 14, 15, 16] },
     },
     9: {
@@ -152,4 +152,4 @@ const digitsV3: IconSet = {
   spins: { 6: { 9: 180 }, 9: { 6: -180 } },
 };
 
-export default digitsV3;
+export default condensedDigits;

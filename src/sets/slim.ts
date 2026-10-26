@@ -1,4 +1,4 @@
-// Digit set v4: thin, tall, round digits, drafted from the reference images in icons/v4/
+// Digit set "slim": thin, tall, round digits, drafted from the reference images in icons/slim/
 // (the set format is described in ../types.ts).
 //
 // The images (94 px tall, 6 px stroke, 50 px wide; 5.5 px = 1 grid unit) reveal a strict construction, so the set
@@ -43,7 +43,7 @@ const SIX: Stroke[] = [
   ),
 ];
 
-const digitsV4: IconSet = {
+const slimDigits: IconSet = {
   segmentCount: 16,
   strokeWidth: 6 / 5.5,
   lineCap: 'round',
@@ -74,14 +74,14 @@ const digitsV4: IconSet = {
     9: SIX.map(turnedAround).reverse(),
   },
   alternativeStrokes: {
-    // the 8 traced like the 0 (as in v1): from the top counter-clockwise — left half of TOP down to the waist,
+    // the 8 traced like the 0 (as in the round set): from the top counter-clockwise — left half of TOP down to the waist,
     // once around BOTTOM, right half of TOP back up
     '8-like-0': [topArc(270, 90), bottomArc(270, -90), topArc(90, -90)],
-    // the 8 as two clockwise loops from the waist (as in v1): the 3's ends slide along the circles into the waist
+    // the 8 as two clockwise loops from the waist (as in the round set): the 3's ends slide along the circles into the waist
     '8-two-loops': [topArc(90, 450), bottomArc(270, 630)],
-    // the usual figure-eight starting on the right side of BOTTOM (as in v1, where the 4's crossbar starts)
+    // the usual figure-eight starting on the right side of BOTTOM (as in the round set, where the 4's crossbar starts)
     '8-from-right': [bottomArc(0, -90), topArc(90, 450), bottomArc(270, 0)],
-    // mirrored figure-eight from the waist (as in v1): TOP counter-clockwise, BOTTOM clockwise — like the 5
+    // mirrored figure-eight from the waist (as in the round set): TOP counter-clockwise, BOTTOM clockwise — like the 5
     '8-mirrored': [topArc(90, -270), bottomArc(270, 630)],
   },
   // optimizer fits (tools/check.ts) for the pairs the user rated bad / midd
@@ -111,7 +111,7 @@ const digitsV4: IconSet = {
     },
     4: {
       6: { breakpoints: [0, 0.25, 0.25, 0.25, 0.4375, 1, 1.2917, 1.3542, 1.5208, 1.9583, 2, 2.1875, 2.1875, 2.1875, 2.1875, 2.1875, 3] },
-      // as in v1: drawn backwards, so the stem's end meets the crossbar's start on the 8's right side
+      // as in the round set: drawn backwards, so the stem's end meets the crossbar's start on the 8's right side
       8: { reversed: true },
       3: { breakpoints: [0, 1, 1.9792, 1.9792, 2, 2.1458, 2.2917, 2.4375, 2.4583, 2.5, 2.625, 2.7917, 2.9375, 2.9375, 2.9375, 2.9375, 3] },
       2: { breakpoints: [0, 1, 1.9583, 1.9583, 2, 2.0625, 2.2292, 2.3542, 2.4792, 2.6042, 2.75, 2.875, 3, 3, 3, 3, 3] },
@@ -130,16 +130,16 @@ const digitsV4: IconSet = {
       0: { breakpoints: [0, 0, 0, 0.0417, 0.25, 0.4792, 1, 1.25, 1.3958, 1.5417, 1.7083, 1.9167, 1.9375, 1.9375, 1.9375, 1.9375, 2] },
     },
     8: {
-      // as in v1–v3: the 0's left and right points move in to the waist
+      // as in round, square and condensed: the 0's left and right points move in to the waist
       0: { tracing: '8-like-0', breakpoints: [0, 0.1667, 0.3333, 0.5208, 0.625, 1, 1.25, 1.3333, 1.4167, 1.5, 1.625, 1.75, 2, 2.375, 2.4792, 2.75, 3] },
-      // the user's idea from v1: the 4's two ends meet on the right side of the bottom circle
+      // the user's idea from the round set: the 4's two ends meet on the right side of the bottom circle
       4: { tracing: '8-from-right', breakpoints: [0, 0, 0.1667, 0.5, 1, 1.25, 1.5, 1.7083, 1.9167, 2, 2.125, 2.2292, 2.3333, 2.3542, 2.6667, 2.9792, 3] },
       6: { breakpoints: [0, 0.25, 0.5, 0.5, 0.75, 1, 1.1875, 1.25, 1.375, 1.5, 1.625, 1.75, 1.7917, 1.8958, 2, 2, 2] },
       // the two-loop tracing fits the 9 best (no spin needed)
       9: { tracing: '8-two-loops', breakpoints: [0, 0, 0, 0.1042, 0.2083, 0.25, 0.375, 0.5, 0.625, 0.75, 0.8125, 1, 1.25, 1.375, 1.5, 1.75, 2] },
-      // the user's idea from v1: both ends of the 5 meet at the waist — bars → top loop, bowl → bottom loop
+      // the user's idea from the round set: both ends of the 5 meet at the waist — bars → top loop, bowl → bottom loop
       5: { tracing: '8-mirrored', breakpoints: [0, 0.25, 0.5, 0.5833, 0.625, 0.6875, 0.8125, 0.875, 0.9167, 1, 1.1042, 1.2083, 1.2917, 1.3958, 1.5, 1.75, 2] },
-      // the user's idea from v1: both ends of the 3 slide along the circles into the waist
+      // the user's idea from the round set: both ends of the 3 slide along the circles into the waist
       3: { tracing: '8-two-loops', breakpoints: [0, 0.25, 0.4583, 0.5208, 0.625, 0.7083, 0.8125, 0.8958, 1, 1.1042, 1.1875, 1.2917, 1.3958, 1.4792, 1.5625, 1.75, 2] },
     },
     9: {
@@ -153,4 +153,4 @@ const digitsV4: IconSet = {
   spins: { 2: { 6: 180 }, 6: { 9: 180, 2: -180 }, 9: { 6: -180 } },
 };
 
-export default digitsV4;
+export default slimDigits;

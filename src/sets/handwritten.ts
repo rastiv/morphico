@@ -1,4 +1,4 @@
-// Digit set v5: hand-drawn marker digits, traced from the reference images in icons/v5/
+// Digit set "handwritten": hand-drawn marker digits, traced from the reference images in icons/handwritten/
 // (the set format is described in ../types.ts).
 //
 // Free-form strokes, so the geometry is traced rather than constructed (scratch tools, see CLAUDE.md):
@@ -11,7 +11,7 @@
 import { cubic } from '../geometry.ts';
 import type { IconSet } from '../types.ts';
 
-const digitsV5: IconSet = {
+const handwrittenDigits: IconSet = {
   segmentCount: 16,
   strokeWidth: 1.04,
   lineCap: 'round',
@@ -133,4 +133,4 @@ const digitsV5: IconSet = {
   spins: {},
 };
 
-export default digitsV5;
+export default handwrittenDigits;

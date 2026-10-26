@@ -1,4 +1,4 @@
-// Digit set v1: geometric sans digits, drafted from the reference images in icons/v1/
+// Digit set "round": geometric sans digits, drafted from the reference images in icons/round/
 // (the set format is described in ../types.ts).
 //
 // Measured from the images and tidied up so shared parts are exactly shared:
@@ -38,7 +38,7 @@ const FIVE_JOIN_ANGLE = 237.2;
 /** The 7's foot: on the measured diagonal (16, 4.2 → 7.45, 20.6), pulled in to the base line. */
 const SEVEN_FOOT = pointAtY([16, TOP_BAR_Y], [7.45, 20.6], BASE_Y);
 
-const digitsV1: IconSet = {
+const roundDigits: IconSet = {
   segmentCount: 12,
   strokeWidth: STROKE_WIDTH,
   lineCap: 'round',
@@ -244,4 +244,4 @@ const digitsV1: IconSet = {
   },
 };
 
-export default digitsV1;
+export default roundDigits;

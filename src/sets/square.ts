@@ -1,4 +1,4 @@
-// Digit set v2: rounded-square "techno" digits, drafted from the reference images in icons/v2/
+// Digit set "square": rounded-square "techno" digits, drafted from the reference images in icons/square/
 // (the set format is described in ../types.ts).
 //
 // The images are tiny (every digit 28 px tall, 4 px stroke), so the shapes are written on the images' own pixel
@@ -36,7 +36,7 @@ const EIGHT_RADIUS = 6;
 const SIX_POINTS: Point[] = [[15, 2], [2, 2], [2, 26], [19, 26], [19, 12], [2, 12]];
 const SIX_RADII = [0, SIX_RADIUS, SIX_RADIUS, SIX_RADIUS, SIX_RADIUS, 0];
 
-const digitsV2: IconSet = {
+const squareDigits: IconSet = {
   segmentCount: 20,
   strokeWidth: STROKE_WIDTH,
   lineCap: 'round',
@@ -163,4 +163,4 @@ const digitsV2: IconSet = {
   spins: { 6: { 9: 180 }, 9: { 6: -180 } },
 };
 
-export default digitsV2;
+export default squareDigits;

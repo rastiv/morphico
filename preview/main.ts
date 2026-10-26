@@ -1,16 +1,23 @@
 // Preview page (dev only, not published). Served as JavaScript by tools/serve.ts.
 import { animate, easings } from '../src/engine.ts';
 import { defaultShapes, interpolate, rotateAroundCenter, shapeForPair, toPathData, toSegments } from '../src/geometry.ts';
-import digitsV1 from '../src/sets/v1.ts';
-import digitsV2 from '../src/sets/v2.ts';
-import digitsV3 from '../src/sets/v3.ts';
-import digitsV4 from '../src/sets/v4.ts';
-import digitsV5 from '../src/sets/v5.ts';
+import roundDigits from '../src/sets/round.ts';
+import squareDigits from '../src/sets/square.ts';
+import condensedDigits from '../src/sets/condensed.ts';
+import slimDigits from '../src/sets/slim.ts';
+import handwrittenDigits from '../src/sets/handwritten.ts';
 import type { IconSet, PathNumbers } from '../src/types.ts';
 
 type EasingName = keyof typeof easings;
 
-const ICON_SETS: Record<string, IconSet> = { v1: digitsV1, v2: digitsV2, v3: digitsV3, v4: digitsV4, v5: digitsV5 };
+const ICON_SETS: Record<string, IconSet> = {
+  round: roundDigits,
+  square: squareDigits,
+  condensed: condensedDigits,
+  slim: slimDigits,
+  handwritten: handwrittenDigits,
+};
+const DEFAULT_SET = 'round';
 const DIGITS = [...'0123456789'];
 const PRESET_COLORS = ['#e8e8ea', '#7aa2ff', '#69db7c', '#ffd43b', '#ffa94d', '#ff6b6b', '#f783ac', '#9775fa'];
 const AUTO_PLAY_PAUSE = 700; // ms between two auto-play morphs
@@ -57,7 +64,7 @@ const settings = {
   },
 };
 
-let iconSetName = 'v1';
+let iconSetName = DEFAULT_SET;
 let iconSet = ICON_SETS[iconSetName];
 let shapes: Record<string, PathNumbers> = {};
 let morphFrom: PathNumbers | null = null;
@@ -366,7 +373,7 @@ function setLiveClock(on: boolean): void {
 for (const setName of Object.keys(ICON_SETS)) {
   const button = document.createElement('button');
   button.dataset.set = setName;
-  button.textContent = setName.toUpperCase();
+  button.textContent = setName[0].toUpperCase() + setName.slice(1);
   button.onclick = () => selectIconSet(setName);
   setButtons.appendChild(button);
 }
@@ -421,4 +428,4 @@ for (const [input, key] of [[cellWidthInput, 'cell-width'], [spacingInput, 'spac
 liveClockToggle.onchange = () => setLiveClock(liveClockToggle.checked);
 
 const rememberedSet = settings.read('set');
-selectIconSet(rememberedSet && rememberedSet in ICON_SETS ? rememberedSet : 'v1');
+selectIconSet(rememberedSet && rememberedSet in ICON_SETS ? rememberedSet : DEFAULT_SET);
