@@ -33,7 +33,8 @@ digit.to('8', { onEnd: (result) => {} });     // or pass a callback
 digit.destroy();                              // stops and removes it (e.g. when a component unmounts)
 ```
 
-States of the digit sets: `'0'`…`'9'`, `'-'`, and `' '` (empty: nothing drawn, shapes grow out of it and fade).
+States of the digit sets: `'0'`…`'9'`, `'-'` `'/'` `'.'` `','` `':'`, and `' '` (empty: nothing drawn, shapes grow
+out of it and fade). A digit morphing into `-` `/` `.` `,` is pressed flat onto it; into `:` it splits into the two dots.
 
 Icon sets (based on [Lucide](https://lucide.dev)):
 
@@ -55,10 +56,11 @@ clock.set('05:00');   // only the digits that changed morph
 clock.destroy();
 ```
 
-- Supported characters: digits `0`–`9`, `-` and space morph; `:` `.` `,` `/` stay still.
+- Supported characters: digits `0`–`9`, space, `-` `:` `.` `,` `/` — all of them morph.
   **Any other character is removed** (with the regex `/[^0-9 :.,\/-]/g`): `'12:09 AM'` shows `12:09 `.
-- If the length or the places of `:` `.` `,` `/` change, the line is rebuilt without animation. Pad counters with
-  spaces to keep them morphing: `counter.set(String(count).padStart(3, ' '))`.
+- Cells: digits, space and `-` have one width, `:` `.` `,` half of it, `/` 0.7 of it. A change morphs when the length
+  and every cell's width stay the same (`5` ↔ `-`, `.` ↔ `,`); otherwise the line is rebuilt without animation
+  (`5` ↔ `:`). Pad counters with spaces to keep them morphing: `counter.set(String(count).padStart(3, ' '))`.
 - Digits sit on the text baseline, and every cell has the same width, so clocks don't jiggle.
 
 ## Options

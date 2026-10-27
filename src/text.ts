@@ -4,18 +4,16 @@ import { resolveIconSet } from './iconSets.ts';
 import type { IconSetName } from './iconSets.ts';
 import { createMorphingPath, hasState } from './morph.ts';
 import type { MorphingPath, MorphOptions } from './morph.ts';
-import { createIconSvg, createStrokedElement, hasFixedStrokeWidth } from './svg.ts';
+import { createIconSvg, createStrokedElement } from './svg.ts';
 import type { StyleOptions } from './svg.ts';
-import type { IconSet, TextLayout } from './types.ts';
+import type { IconSet } from './types.ts';
 
-/** Characters `text()` can show: digits, `-` and space morph; `:` `.` `,` `/` stay still. Anything else is removed. */
+/** Characters `text()` can show: digits, space, `-` `:` `.` `,` `/` — all of them morph. Anything else is removed. */
 const UNSUPPORTED_CHARACTERS = /[^0-9 :.,\/-]/g;
 
 /** Vertical part of the 24×24 grid shown in a cell: y 3…21 holds every digit including its stroke. */
 const CELL_TOP = 3;
 const CELL_HEIGHT = 18;
-/** Dot diameter of `:` `.` `,` relative to the stroke width. */
-const DOT_SIZE = 1.2;
 
 export interface TextOptions extends MorphOptions, StyleOptions {
   /** A built-in set by name (default `'round'`) or a set object. */
@@ -46,9 +44,10 @@ export interface Text {
   /** The text shown, or being morphed to (after unsupported characters were removed). */
   readonly value: string;
   /**
-   * Shows `value`. Unsupported characters are removed first. If the length and the places of `:` `.` `,` `/`
-   * stay the same, only the changed digits morph; otherwise the line is rebuilt without animation
-   * (pad with spaces, e.g. `String(count).padStart(3, ' ')`, to keep counters morphing).
+   * Shows `value`. Unsupported characters are removed first. If the length and every cell's width stay the same,
+   * the changed characters morph; otherwise the line is rebuilt without animation. Cells: digits, space and `-` are
+   * one width, `:` `.` `,` half of it, `/` 0.7 of it — so `5` ↔ `-` or `.` ↔ `,` morph, `5` ↔ `:` rebuilds.
+   * Pad with spaces (e.g. `String(count).padStart(3, ' ')`) to keep counters morphing.
    */
   set(value: string, options?: SetOptions): Promise<TextResult>;
   /** Stops all morphs and removes the line from the page. */
@@ -57,38 +56,12 @@ export interface Text {
 
 interface Cell {
   svg: SVGSVGElement;
-  /** Static characters (`:` `.` `,` `/`) have none. */
-  morphingPath: MorphingPath | null;
-  character: string;
+  morphingPath: MorphingPath;
+  /** Cell width in grid units: a change morphs only between characters of the same width. */
+  width: number;
 }
 
 const formatNumber = (value: number): string => String(+value.toFixed(4));
-
-/**
- * Draws `:` `.` `,` or `/` into the cell, matching the stroke width and the set's digit positions.
- * A dot is a very short round-ended line drawn thicker, so its size follows the stroke width in any unit (CSS lengths too).
- * `unitWidth`: the stroke width in grid units, for placing the dots (the set's own width when it is a CSS length).
- */
-const drawStaticCharacter = (
-  svg: SVGSVGElement, character: string, style: StyleOptions, unitWidth: number, textLayout: TextLayout,
-): void => {
-  const { baselineY, colonDotsY } = textLayout;
-  const dotRadius = (unitWidth * DOT_SIZE) / 2;
-  const baseDotY = baselineY + unitWidth / 2 - dotRadius; // dot bottom = digit bottom
-  const dot = (y: number) => {
-    // a very short line with round ends draws a solid dot (always round, whatever the line cap option)
-    const dotPath = svg.appendChild(createStrokedElement('path', style, { d: `M12 ${formatNumber(y)}h0.001`, 'stroke-linecap': 'round' }));
-    if (hasFixedStrokeWidth(style)) dotPath.style.strokeWidth = `calc(${DOT_SIZE} * ${style.strokeWidth})`;
-    else dotPath.setAttribute('stroke-width', formatNumber(unitWidth * DOT_SIZE));
-  };
-  const line = (fromX: number, fromY: number, toX: number, toY: number) => svg.appendChild(createStrokedElement('path', style, {
-    d: `M${formatNumber(fromX)} ${formatNumber(fromY)}L${formatNumber(toX)} ${formatNumber(toY)}`,
-  }));
-  if (character === ':') colonDotsY.forEach(dot);
-  if (character === '.' || character === ',') dot(baseDotY);
-  if (character === ',') line(12 + dotRadius * 0.4, baseDotY, 11, baselineY + 2.2);
-  if (character === '/') line(9.5, baselineY, 14.5, 24 - baselineY);
-};
 
 /** Adds a line of morphing characters (a <span> of <svg> cells) to `element`. */
 export const text = (element: Element, options: TextOptions = {}): Text => {
@@ -110,10 +83,9 @@ export const text = (element: Element, options: TextOptions = {}): Text => {
   let cells: Cell[] = [];
   let value = '';
 
-  const isMorphing = (character: string) => hasState(iconSet, character);
   const widthOf = (character: string) => {
-    if (isMorphing(character)) return digitCellWidth;
-    return character === '/' ? digitCellWidth * 0.7 : digitCellWidth / 2;
+    if (character === '/') return digitCellWidth * 0.7;
+    return ':.,'.includes(character) ? digitCellWidth / 2 : digitCellWidth;
   };
   /** CSS length: `units` grid units at the line's size. */
   const scaled = (units: number) => `calc(${size} * ${formatNumber(units / CELL_HEIGHT)})`;
@@ -129,31 +101,29 @@ export const text = (element: Element, options: TextOptions = {}): Text => {
       verticalAlign: scaled(inkBottom - CELL_TOP - CELL_HEIGHT), // digit bottom on the text baseline
       marginLeft: index ? `var(--morphico-spacing, ${scaled(cellSpacing)})` : '0',
     });
-    let morphingPath: MorphingPath | null = null;
-    if (isMorphing(character)) morphingPath = createMorphingPath(svg.appendChild(createStrokedElement('path', style)), iconSet, character);
-    else drawStaticCharacter(svg, character, style, unitWidth, textLayout);
-    return { svg, morphingPath, character };
+    const morphingPath = createMorphingPath(svg.appendChild(createStrokedElement('path', style)), iconSet, character);
+    return { svg, morphingPath, width };
   };
 
   const rebuild = (characters: string[]): void => {
-    for (const cell of cells) cell.morphingPath?.stop();
+    for (const cell of cells) cell.morphingPath.stop();
     cells = characters.map(createCell);
     line.replaceChildren(...cells.map((cell) => cell.svg));
   };
 
   const show = (nextValue: string, { onEnd, ...morphOptions }: SetOptions = {}): Promise<TextResult> => {
-    value = nextValue.replace(UNSUPPORTED_CHARACTERS, '');
+    value = [...nextValue.replace(UNSUPPORTED_CHARACTERS, '')].filter((character) => hasState(iconSet, character)).join('');
     line.setAttribute('aria-label', value.trim());
     const characters = [...value];
-    const sameLayout = characters.length === cells.length && characters.every((character, index) =>
-      (cells[index].morphingPath ? isMorphing(character) : character === cells[index].character));
+    const sameLayout = characters.length === cells.length
+      && characters.every((character, index) => widthOf(character) === cells[index].width);
     let change: Promise<TextResult>;
     if (sameLayout) {
       const morphs = cells.map((cell, index) =>
-        cell.morphingPath?.morphTo(characters[index], { ...defaultMorphOptions, ...morphOptions }));
+        cell.morphingPath.morphTo(characters[index], { ...defaultMorphOptions, ...morphOptions }));
       const finishedValue = value;
       change = Promise.all(morphs).then((results) =>
-        ({ value: finishedValue, interrupted: results.some((result) => result?.interrupted) }));
+        ({ value: finishedValue, interrupted: results.some((result) => result.interrupted) }));
     } else {
       rebuild(characters);
       change = Promise.resolve({ value, interrupted: false });
@@ -168,7 +138,7 @@ export const text = (element: Element, options: TextOptions = {}): Text => {
     get value() { return value; },
     set: show,
     destroy() {
-      for (const cell of cells) cell.morphingPath?.stop();
+      for (const cell of cells) cell.morphingPath.stop();
       line.remove();
     },
   };

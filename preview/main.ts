@@ -3,7 +3,8 @@
 // own look the same way the library options do (strokeWidth, lineCap, lineJoin, fill, roundness).
 import { animate, easings } from '../src/engine.ts';
 import {
-  defaultShapes, interpolate, pieceLengthOf, rotateAroundCenter, shapeForPair, splitPieces, toPathData, toSegments,
+  defaultShapes, interpolate, pieceLengthOf, rotateAroundCenter, scaleAroundCenter, shapeForPair, splitPieces, toPathData,
+  toSegments,
 } from '../src/geometry.ts';
 import { iconSets, resolveIconSet } from '../src/iconSets.ts';
 import type { IconSetName } from '../src/iconSets.ts';
@@ -21,7 +22,11 @@ interface StyleChoices extends StyleOptions {
 
 const SET_NAMES = Object.keys(iconSets) as IconSetName[];
 const DEFAULT_SETS: Record<Tab, IconSetName> = { digits: 'round', icons: 'media' };
-const DIGITS = [...'0123456789-'];
+/** Buttons of a digit set: the digits, then the other characters text() shows (space = empty). */
+const DIGIT_SET_STATES = [...'0123456789-:.,/ '];
+const EMPTY = ' ';
+/** How small a shape gets while it fades into (or out of) the empty state — as in the library (morph.ts). */
+const EMPTY_SCALE = 0.3;
 const PRESET_COLORS = ['#e8e8ea', '#7aa2ff', '#69db7c', '#ffd43b', '#ffa94d', '#ff6b6b', '#f783ac', '#9775fa'];
 const LINE_CAPS: IconSet['lineCap'][] = ['round', 'butt', 'square'];
 const LINE_JOINS: IconSet['lineJoin'][] = ['round', 'miter', 'bevel'];
@@ -92,6 +97,8 @@ let shapes: Record<string, PathNumbers> = {};
 let morphFrom: PathNumbers | null = null;
 let morphTo: PathNumbers | null = null;
 let spinAngle = 0;
+/** Opacity at the start and end of the morph: only the empty state is faded (0). */
+let fade = { from: 1, to: 1 };
 let currentPath: PathNumbers | null = null;
 let targetState = '';
 let settled = true; // false while a morph runs (or was stopped half-way by the progress slider)
@@ -105,7 +112,7 @@ const stopRunningAnimation = (): void => {
 };
 const setsOfTab = (someTab: Tab) => SET_NAMES.filter((name) => Boolean(iconSets[name].textLayout) === (someTab === 'digits'));
 /** Digit sets always show 0–9 and - (dashed = not drawn yet); icon sets their own states. */
-const statesOf = (someSet: IconSet): string[] => (someSet.textLayout ? DIGITS : Object.keys(someSet.strokes));
+const statesOf = (someSet: IconSet): string[] => (someSet.textLayout ? DIGIT_SET_STATES : Object.keys(someSet.strokes));
 /** Stroke width as a CSS length (px) keeps its width on screen; a number scales with the icon. */
 const hasFixedWidth = () => typeof style.strokeWidth === 'string';
 // applied to every path (vector-effect is not inherited)
@@ -166,6 +173,9 @@ function showProgress(progress: number): void {
   progressOutput.textContent = progress.toFixed(2);
 }
 
+/** The stage's opacity (the empty state fades). */
+const showOpacity = (opacity: number) => morphPath.setAttribute('opacity', String(Math.min(Math.max(opacity, 0), 1)));
+
 function goTo(state: string): void {
   const previousState = targetState;
   targetState = state;
@@ -173,15 +183,24 @@ function goTo(state: string): void {
     button.classList.toggle('active', button.dataset.state === state);
   }
   stopRunningAnimation();
-  if (!shapes[state] || !currentPath || !shapes[previousState]) { // nothing to morph from or to: jump
+  const drawable = (someState: string) => someState === EMPTY || Boolean(shapes[someState]);
+  if (!drawable(state) || !drawable(previousState) || (!currentPath && previousState !== EMPTY) || state === previousState) {
+    // nothing to morph from or to: jump
     morphFrom = morphTo = shapes[state] ?? null;
+    fade = { from: 1, to: 1 };
     spinAngle = 0;
     settled = true;
+    showOpacity(state === EMPTY ? 0 : 1);
     render(morphTo);
     return;
   }
-  const from = settled ? shapeForPair(iconSet, shapes, previousState, state) : currentPath;
-  const to = shapeForPair(iconSet, shapes, state, previousState);
+  // the empty state: the other shape, shrunk and faded out (as in the library)
+  const target = state === EMPTY ? null : previousState === EMPTY ? shapes[state] : shapeForPair(iconSet, shapes, state, previousState);
+  const start = !settled ? currentPath
+    : previousState === EMPTY ? null : shapeForPair(iconSet, shapes, previousState, state);
+  const from = start ?? scaleAroundCenter(target!, EMPTY_SCALE);
+  const to = target ?? scaleAroundCenter(start!, EMPTY_SCALE);
+  fade = { from: previousState === EMPTY ? 0 : 1, to: state === EMPTY ? 0 : 1 };
   morphFrom = from;
   morphTo = to;
   spinAngle = (settled && iconSet.spins[previousState]?.[state]) || 0;
@@ -192,7 +211,9 @@ function goTo(state: string): void {
   stopAnimation = animate((frameTime) => {
     const progress = Math.min(Math.max((frameTime - startTime) / duration, 0), 1);
     showProgress(progress);
-    render(blend(from, to, easeProgress(progress), spinAngle));
+    const easedProgress = easeProgress(progress);
+    showOpacity(fade.from + (fade.to - fade.from) * easedProgress);
+    render(blend(from, to, easedProgress, spinAngle));
     if (progress >= 1) settled = true;
     return progress < 1;
   });
@@ -214,12 +235,12 @@ function buildStateButtons(): void {
     const button = document.createElement('button');
     const shape = shapes[state];
     button.dataset.state = state;
-    button.title = shape ? `Morph to ${state}` : `${state}: not drawn yet`;
-    button.classList.toggle('not-drawn', !shape);
+    button.title = state === EMPTY ? 'Morph to empty (space)' : shape ? `Morph to ${state}` : `${state}: not drawn yet`;
+    button.classList.toggle('not-drawn', !shape && state !== EMPTY);
     button.classList.toggle('active', state === targetState);
     button.innerHTML = shape
       ? `<svg viewBox="0 0 24 24" stroke="currentColor"><path ${attributeText(svgStyleAttributes())} d="${toPathData(shape, pieceLengthOf(iconSet))}"/></svg>`
-      : state;
+      : state === EMPTY ? '␣' : state;
     button.onclick = () => {
       setAutoPlay(false);
       goTo(state);
@@ -417,7 +438,9 @@ progressInput.oninput = () => {
   stopRunningAnimation();
   const progress = Number(progressInput.value);
   progressOutput.textContent = progress.toFixed(2);
-  if (morphFrom && morphTo) render(blend(morphFrom, morphTo, easing()(progress), spinAngle));
+  const easedProgress = easing()(progress);
+  showOpacity(fade.from + (fade.to - fade.from) * easedProgress);
+  if (morphFrom && morphTo) render(blend(morphFrom, morphTo, easedProgress, spinAngle));
 };
 
 for (const color of PRESET_COLORS) {

@@ -9,6 +9,7 @@
 //  - 3 is drawn on exactly the two circles of 8 (they touch at 12, 11.2)
 //  - 9 is exactly 6 turned 180° around 12,12 → 6 ↔ 9 morphs as a pure spin
 import { arc, ellipse, line, pointOnCircle } from '../geometry.ts';
+import { withTextCharacters } from './characters.ts';
 import type { IconSet, Point } from '../types.ts';
 
 const STROKE_WIDTH = 1.2; // the reference images use 1.6; thinner by the user's choice
@@ -38,7 +39,8 @@ const FIVE_JOIN_ANGLE = 237.2;
 /** The 7's foot: on the measured diagonal (16, 4.2 → 7.45, 20.6), pulled in to the base line. */
 const SEVEN_FOOT = pointAtY([16, TOP_BAR_Y], [7.45, 20.6], BASE_Y);
 
-export const roundDigits: IconSet = {
+// '-' '/' '.' ',' ':' are added by withTextCharacters (characters.ts)
+export const roundDigits: IconSet = withTextCharacters({
   segmentCount: 12,
   strokeWidth: STROKE_WIDTH,
   lineCap: 'round',
@@ -79,7 +81,6 @@ export const roundDigits: IconSet = {
       arc(12, 8.4, BIG_RADIUS, SIX_TAIL_ANGLE + 180 - 360, SIX_TAIL_ANGLE + 180),
       line(...pointOnCircle(12, 8.4, BIG_RADIUS, SIX_TAIL_ANGLE + 180), ...NINE_TAIL_END),
     ],
-    '-': [line(9.5, 12, 14.5, 12)], // minus / hyphen: morphs like a digit
   },
   alternativeStrokes: {
     // the 8 traced like the 0 (from the top, counter-clockwise): left half of the top circle down to the waist,
@@ -244,4 +245,4 @@ export const roundDigits: IconSet = {
     9: { 6: -180, 8: -180 },
   },
   textLayout: { cellWidth: 10, spacing: 4, baselineY: 19.8, colonDotsY: [7.6, 15.6] },
-};
+});

@@ -329,17 +329,40 @@ export const defaultShapes = (iconSet: IconSet): Record<string, PathNumbers> =>
     return layoutStrokes(strokes, defaultBreakpoints(strokes, iconSet.segmentCount));
   })]));
 
+/**
+ * `shape` pressed flat onto the straight line `from` → `to`: every point moves onto the line, keeping its position
+ * along the line's direction (the shape's extent along it is stretched to the line's length).
+ */
+export const flattenOntoLine = (shape: PathNumbers, from: Point, to: Point): PathNumbers => {
+  const direction: Point = [to[0] - from[0], to[1] - from[1]];
+  const positions = Array.from({ length: shape.length / 2 }, (_, pointIndex) =>
+    shape[2 * pointIndex] * direction[0] + shape[2 * pointIndex + 1] * direction[1]);
+  const lowest = Math.min(...positions), highest = Math.max(...positions);
+  return positions.flatMap((position) => {
+    const along = highest - lowest > EPSILON ? (position - lowest) / (highest - lowest) : 0.5;
+    return [from[0] + direction[0] * along, from[1] + direction[1] * along];
+  });
+};
+
 /** The shape of `state` laid out for morphing to or from `otherState` (each piece by its own pair layout). */
 export const shapeForPair = (
   iconSet: IconSet, shapes: Record<string, PathNumbers>, state: string, otherState: string,
 ): PathNumbers => {
-  const defaultPieces = splitPieces(shapes[state], pieceLengthOf(iconSet));
-  return piecesOf(iconSet).flatMap((pieceSet, pieceIndex) => {
-    const pairLayout = pieceSet.pairLayouts[state]?.[otherState];
-    if (!pairLayout) return defaultPieces[pieceIndex];
-    const strokes = pairLayout.tracing ? pieceSet.alternativeStrokes[pairLayout.tracing] : strokesOf(pieceSet, state, pieceIndex);
-    const laidOut = pairLayout.breakpoints ? layoutStrokes(strokes, pairLayout.breakpoints) : defaultPieces[pieceIndex];
+  const pieceLength = pieceLengthOf(iconSet);
+  const pieceForPair = (pieceSet: PieceSet, pieceIndex: number, pieceState: string, pieceOther: string, mayFlatten: boolean): PathNumbers => {
+    const defaultPiece = splitPieces(shapes[pieceState], pieceLength)[pieceIndex];
+    const pairLayout = pieceSet.pairLayouts[pieceState]?.[pieceOther];
+    if (!pairLayout) return defaultPiece;
+    if (pairLayout.flatten && mayFlatten) {
+      const [line] = strokesOf(pieceSet, pieceState, pieceIndex);
+      if (line.kind !== 'line') throw new Error(`flatten: state "${pieceState}" must be one straight line`);
+      // the other side as it is laid out for this pair (if it flattens too, its plain layout)
+      return flattenOntoLine(pieceForPair(pieceSet, pieceIndex, pieceOther, pieceState, false), line.from, line.to);
+    }
+    const strokes = pairLayout.tracing ? pieceSet.alternativeStrokes[pairLayout.tracing] : strokesOf(pieceSet, pieceState, pieceIndex);
+    const laidOut = pairLayout.breakpoints ? layoutStrokes(strokes, pairLayout.breakpoints) : defaultPiece;
     const reordered = reorderSegments(laidOut, pairLayout);
     return pairLayout.rotation ? rotateAroundCenter(reordered, pairLayout.rotation) : reordered;
-  });
+  };
+  return piecesOf(iconSet).flatMap((pieceSet, pieceIndex) => pieceForPair(pieceSet, pieceIndex, state, otherState, true));
 };

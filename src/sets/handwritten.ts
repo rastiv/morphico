@@ -8,10 +8,12 @@
 // the centre line — the marker stroke varies a little, so the pixel match is ~8–17 %).
 //  - every digit is one stroke of 3–7 free cubic curves; round ends and corners
 //  - the 4 is drawn out and back over its crossbar end and right stem (one continuous stroke)
-import { cubic, line } from '../geometry.ts';
+import { cubic } from '../geometry.ts';
+import { withTextCharacters } from './characters.ts';
 import type { IconSet } from '../types.ts';
 
-export const handwrittenDigits: IconSet = {
+// '-' '/' '.' ',' ':' are added by withTextCharacters (characters.ts)
+export const handwrittenDigits: IconSet = withTextCharacters({
   segmentCount: 16,
   strokeWidth: 1.04,
   lineCap: 'round',
@@ -83,7 +85,6 @@ export const handwrittenDigits: IconSet = {
       cubic(14.01, 8.61, 14.16, 8.23, 14.66, 6.7, 15.3, 7.44),
       cubic(15.3, 7.44, 16.93, 9.31, 14.47, 18.24, 11.59, 19.86),
     ],
-    '-': [line(9.5, 12, 14.5, 12)], // minus / hyphen: morphs like a digit
   },
   alternativeStrokes: {},
   // optimizer fits (tools/check.ts) for the pairs the user rated bad / midd / not sure
@@ -133,4 +134,4 @@ export const handwrittenDigits: IconSet = {
   },
   spins: {},
   textLayout: { cellWidth: 9, spacing: 4, baselineY: 20.2, colonDotsY: [8, 16] },
-};
+});

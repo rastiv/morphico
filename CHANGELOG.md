@@ -5,6 +5,8 @@ patch = nicer transitions and fixes, minor = new icon sets or options, major = A
 
 ## Unreleased
 
+- `-` `/` `.` `,` `:` are morphing states of every digit set (in `icon()` and `text()`); a digit morphs into them by
+  being pressed flat onto the line (or split into the two dots of `:`).
 - New icon set `media`: `play`, `pause`, `stop` (based on Lucide, see LICENSE-lucide).
 - Icons can be made of several pieces (e.g. pause = two bars).
 - Style options for `icon()` and `text()`: `strokeWidth` (grid units, or a CSS length such as `'2px'` that stays fixed

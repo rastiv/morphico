@@ -56,6 +56,12 @@ export interface PairLayout {
   tracing?: string;
   /** Rotate by this many degrees around the icon center (only for shapes that look the same turned). */
   rotation?: number;
+  /**
+   * For states drawn as one straight line (`-`, `/`, a dot): lay the line out as the other state pressed flat onto
+   * it (every point keeps its position along the line), so the morph flattens the other shape onto the line.
+   * The other side keeps its own layout for this pair. Overrides every option above.
+   */
+  flatten?: boolean;
 }
 
 /** How a set's characters sit in the narrow cells of `text()`. Numbers are in grid units (digits are 16 high). */
