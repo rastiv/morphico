@@ -1,8 +1,8 @@
 {
   "name": "morphico",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Morphing line-art icons: smooth SVG path transitions between digits and other states. No dependencies.",
-  "license": "MIT",
+  "license": "MIT AND ISC",
   "author": "Raycho Ivanov",
   "repository": {
     "type": "git",

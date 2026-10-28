@@ -3,8 +3,10 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 patch = nicer transitions and fixes, minor = new icon sets or options, major = API changes or a changed resting look of an icon.
 
-## Unreleased
+## 0.2.0
 
+- The built files carry the full Lucide (ISC) and Feather (MIT) license notices in their header comment;
+  `package.json` declares `"license": "MIT AND ISC"` (the code is MIT, the icon data comes from Lucide).
 - `-` `/` `.` `,` `:` are morphing states of every digit set (in `icon()` and `text()`); a digit morphs into them by
   being pressed flat onto the line (or split into the two dots of `:`).
 - New icon sets (based on Lucide): `eye`, `volume`, `toggle` (plus / minus / close / check), `lock`, `bell`, `mic`,

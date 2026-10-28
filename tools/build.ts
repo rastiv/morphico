@@ -15,7 +15,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 process.chdir(path.resolve(import.meta.dirname, '..'));
-const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8')) as { version: string; license: string };
+const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8')) as { version: string };
 const COMPILED = '.build';
 const RELATIVE_IMPORT = /^(import|export)\s*\{([^}]*)\}\s*from\s*'(\.[^']+\.js)';[ \t]*\r?\n?/gm;
 const DECLARED_EXPORT = /^export\s+(?:const|let|function\*?|class)\s+([\w$]+)/gm;
@@ -51,7 +51,20 @@ const body = modules.map(({ file, code }) => {
   return `${heading}\nconst { ${names} } = (() => {\n${joinable}\nreturn { ${names} };\n})();`;
 }).join('\n\n').replace(/(const version = )'dev'/, `$1'${packageJson.version}'`);
 
-const banner = `/*! morphico v${packageJson.version} | ${packageJson.license} License | icons based on Lucide (ISC, https://lucide.dev), see LICENSE-lucide */\n`;
+// The icons come from Lucide (ISC) and, through Lucide, Feather (MIT): both licenses ask for their notice in every copy,
+// so the banner carries them in full (`/*!` comments survive minifiers) — taken verbatim from LICENSE-lucide, without
+// its list of the Feather icons.
+const [lucideNotice, featherPart] = fs.readFileSync('LICENSE-lucide', 'utf8').split(/^---$/m).map((part) => part.trim());
+const featherNotice = featherPart.slice(featherPart.indexOf('The MIT License'))
+  .replace('(for the icons listed above)', '(for the Lucide icons derived from Feather, listed in LICENSE-lucide)');
+if (!lucideNotice.startsWith('ISC License') || !featherNotice.includes('Cole Bemis')) {
+  throw new Error('LICENSE-lucide: unexpected layout (the banner copies its two notices)');
+}
+const banner = `/*! morphico v${packageJson.version} | code: MIT License, Copyright (c) 2026 Raycho Ivanov (see LICENSE)
+ * Icons based on Lucide (https://lucide.dev), some of them from Feather (https://feathericons.com):
+ *
+${[lucideNotice, featherNotice].join('\n\n').split('\n').map((line) => (line ? ` * ${line}` : ' *')).join('\n')}
+ */\n`;
 const exportList = exportedNames.join(', ');
 fs.mkdirSync('dist');
 fs.writeFileSync('dist/morphico.mjs', `${banner}${body}\n\nexport { ${exportList} };\n`);
