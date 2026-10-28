@@ -47,6 +47,16 @@ Icon sets (based on [Lucide](https://lucide.dev)):
 | `folder` | `closed`, `open` |
 | `theme` | `light` (sun), `dark` (moon) |
 | `weather` | `sunny`, `frosty`, `partly-cloudy`, `showers`, `cloudy`, `thunder`, `rain`, `snow`, `drizzle` |
+| `eye` | `visible`, `hidden` (slashed) |
+| `volume` | `muted` (✕), `low` (no waves), `medium`, `high` |
+| `toggle` | `plus`, `minus`, `close` (✕), `check` |
+| `lock` | `locked`, `unlocked` |
+| `bell` | `on`, `off` (slashed) |
+| `mic` | `on`, `off` (slashed) |
+| `chevron` | `up`, `right`, `down`, `left` |
+| `copy` | `copy`, `copied` (✓) |
+| `wifi` | `none`, `low`, `medium`, `high` |
+| `battery` | `empty`, `low`, `medium`, `full` |
 
 ```ts
 const player = icon(button, { set: 'media', state: 'play' });
@@ -73,7 +83,7 @@ clock.destroy();
 
 | Option | For | Default | |
 | --- | --- | --- | --- |
-| `set` | both | `'round'` | digits: `'round'`, `'square'`, `'condensed'`, `'slim'`, `'handwritten'`; icons (`icon()` only): `'media'`, `'menu'`, `'checkbox'`, `'radio'`, `'folder'`, `'theme'`, `'weather'` |
+| `set` | both | `'round'` | digits: `'round'`, `'square'`, `'condensed'`, `'slim'`, `'handwritten'`; icons (`icon()` only): `'media'`, `'menu'`, `'checkbox'`, `'radio'`, `'folder'`, `'theme'`, `'weather'`, `'eye'`, `'volume'`, `'toggle'`, `'lock'`, `'bell'`, `'mic'`, `'chevron'`, `'copy'`, `'wifi'`, `'battery'` |
 | `state` / `value` | icon / text | empty | What is shown first |
 | `size` | both | `'1em'` | CSS size (icon: width and height; text: height). `1em` follows the font size |
 | `duration` | both | `400` | Milliseconds |

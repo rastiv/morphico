@@ -7,6 +7,8 @@ patch = nicer transitions and fixes, minor = new icon sets or options, major = A
 
 - `-` `/` `.` `,` `:` are morphing states of every digit set (in `icon()` and `text()`); a digit morphs into them by
   being pressed flat onto the line (or split into the two dots of `:`).
+- New icon sets (based on Lucide): `eye`, `volume`, `toggle` (plus / minus / close / check), `lock`, `bell`, `mic`,
+  `chevron`, `copy`, `wifi`, `battery`.
 - New icon set `weather`: `sunny`, `frosty`, `partly-cloudy`, `showers`, `cloudy`, `thunder`, `rain`, `snow`, `drizzle` (based on Lucide).
 - New icon set `theme`: `light` (sun), `dark` (moon) (based on Lucide).
 - New icon set `folder`: `closed`, `open` (based on Lucide).
