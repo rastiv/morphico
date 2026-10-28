@@ -7,8 +7,15 @@ patch = nicer transitions and fixes, minor = new icon sets or options, major = A
 
 - `-` `/` `.` `,` `:` are morphing states of every digit set (in `icon()` and `text()`); a digit morphs into them by
   being pressed flat onto the line (or split into the two dots of `:`).
+- New icon set `weather`: `sunny`, `frosty`, `partly-cloudy`, `showers`, `cloudy`, `thunder`, `rain`, `snow`, `drizzle` (based on Lucide).
+- New icon set `theme`: `light` (sun), `dark` (moon) (based on Lucide).
+- New icon set `folder`: `closed`, `open` (based on Lucide).
+- New icon set `radio`: `unchecked`, `checked`, `checked-big` (based on Lucide).
+- New icon set `checkbox`: `unchecked`, `checked`, `checked-big` (based on Lucide).
+- New icon set `menu`: `menu`, `close`, `back` (based on Lucide).
 - New icon set `media`: `play`, `pause`, `stop` (based on Lucide, see LICENSE-lucide).
-- Icons can be made of several pieces (e.g. pause = two bars).
+- Icons can be made of several pieces (e.g. pause = two bars); a piece can appear by being drawn along its path, like
+  a pen writing it (the checkbox's check).
 - Style options for `icon()` and `text()`: `strokeWidth` (grid units, or a CSS length such as `'2px'` that stays fixed
   at any size), `lineCap`, `lineJoin`, `fill`; `icon()` also `roundness`
   (0 = sharp … 1 = the icon's own corners; icon sets only).

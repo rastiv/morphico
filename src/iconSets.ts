@@ -1,10 +1,16 @@
 // The built-in icon sets, by name. `round` is the default.
+import { checkboxIcons } from './sets/checkbox.ts';
 import { condensedDigits } from './sets/condensed.ts';
+import { folderIcons } from './sets/folder.ts';
 import { handwrittenDigits } from './sets/handwritten.ts';
 import { mediaIcons } from './sets/media.ts';
+import { radioIcons } from './sets/radio.ts';
+import { menuIcons } from './sets/menu.ts';
 import { roundDigits } from './sets/round.ts';
 import { slimDigits } from './sets/slim.ts';
 import { squareDigits } from './sets/square.ts';
+import { themeIcons } from './sets/theme.ts';
+import { weatherIcons } from './sets/weather.ts';
 import type { IconSet } from './types.ts';
 
 export const iconSets = {
@@ -14,6 +20,12 @@ export const iconSets = {
   slim: slimDigits,
   handwritten: handwrittenDigits,
   media: mediaIcons,
+  menu: menuIcons,
+  checkbox: checkboxIcons,
+  radio: radioIcons,
+  folder: folderIcons,
+  theme: themeIcons,
+  weather: weatherIcons,
 } satisfies Record<string, IconSet>;
 
 export type IconSetName = keyof typeof iconSets;

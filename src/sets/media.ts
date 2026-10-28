@@ -6,8 +6,8 @@
 // exactly on the first, so it doesn't show — during a morph to pause the two copies separate into the bars).
 // Every shape runs clockwise from its top left, like Lucide's. Coordinates below are Lucide's; fromLucide /
 // lucideLength scale them into our icon box (more margin, like the digits — see lucide.ts).
-import { roundedPolygon } from '../geometry.ts';
-import type { IconSet, Point, Stroke } from '../types.ts';
+import { reversedStroke, roundedPolygon } from '../geometry.ts';
+import type { IconSet, Point } from '../types.ts';
 import { fromLucide, LUCIDE_STROKE_WIDTH, lucideLength } from './lucide.ts';
 
 /** Lucide's play: a triangle (left side x 5, tip at the right) with rounded corners, starting with the top left arc. */
@@ -16,14 +16,6 @@ const RIGHT_BAR_CORNERS = ([[14, 3], [19, 3], [19, 21], [14, 21]] as Point[]).ma
 const LEFT_BAR_CORNERS = ([[5, 3], [10, 3], [10, 21], [5, 21]] as Point[]).map(fromLucide);
 const SQUARE_CORNERS = ([[3, 3], [21, 3], [21, 21], [3, 21]] as Point[]).map(fromLucide);
 const LUCIDE_RADII = { play: lucideLength(2), pause: lucideLength(1), stop: lucideLength(2) };
-
-/** The same line or arc, drawn in the opposite direction. */
-const reversedStroke = (stroke: Stroke): Stroke => {
-  if (stroke.kind === 'line') return { ...stroke, from: stroke.to, to: stroke.from };
-  if (stroke.kind === 'arc') return { ...stroke, startAngle: stroke.endAngle, endAngle: stroke.startAngle };
-  const [start, control1, control2, end] = stroke.segment;
-  return { kind: 'cubic', segment: [end, control2, control1, start] };
-};
 
 // play ↔ stop (both pieces, the user's sketch): corner to corner, edge to edge, and the tip opens up and down
 // into the square's right side. Play (top left corner, top, tip, bottom, bottom left corner, left):

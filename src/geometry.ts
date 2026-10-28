@@ -22,6 +22,14 @@ export const cubic = (
   control2X: number, control2Y: number, endX: number, endY: number,
 ): Stroke => ({ kind: 'cubic', segment: [[startX, startY], [control1X, control1Y], [control2X, control2Y], [endX, endY]] });
 
+/** The same line or arc, drawn in the opposite direction. */
+export const reversedStroke = (stroke: Stroke): Stroke => {
+  if (stroke.kind === 'line') return { ...stroke, from: stroke.to, to: stroke.from };
+  if (stroke.kind === 'arc') return { ...stroke, startAngle: stroke.endAngle, endAngle: stroke.startAngle };
+  const [start, control1, control2, end] = stroke.segment;
+  return { kind: 'cubic', segment: [end, control2, control1, start] };
+};
+
 export const pointOnCircle = (centerX: number, centerY: number, radius: number, angle: number): Point =>
   [centerX + radius * Math.cos(angle * DEGREE), centerY + radius * Math.sin(angle * DEGREE)];
 
@@ -173,9 +181,16 @@ const writtenSegments = (piece: PathNumbers): CubicSegment[] => {
   return [...segments.slice(firstWithLength), ...segments.slice(0, firstWithLength)];
 };
 
-/** SVG `d` attribute: per piece `M x y` followed by one `C` per segment (`pieceLength`: see pieceLengthOf). */
+/** A piece shrunk to a single point: not drawn at all (round line ends would show it as a dot). */
+const isPoint = (piece: PathNumbers): boolean =>
+  piece.every((value, index) => Math.abs(value - piece[index % 2]) < 1e-6);
+
+/**
+ * SVG `d` attribute: per piece `M x y` followed by one `C` per segment (`pieceLength`: see pieceLengthOf).
+ * Pieces shrunk to a single point are left out.
+ */
 export const toPathData = (path: PathNumbers, pieceLength = path.length): string =>
-  splitPieces(path, pieceLength).map((piece) => {
+  splitPieces(path, pieceLength).filter((piece) => !isPoint(piece)).map((piece) => {
     const segments = writtenSegments(piece);
     const [startX, startY] = segments[0][0];
     return `M${formatNumber(startX)} ${formatNumber(startY)}` + segments
@@ -353,6 +368,11 @@ export const shapeForPair = (
     const defaultPiece = splitPieces(shapes[pieceState], pieceLength)[pieceIndex];
     const pairLayout = pieceSet.pairLayouts[pieceState]?.[pieceOther];
     if (!pairLayout) return defaultPiece;
+    if ((pairLayout.draw || pairLayout.wipe) && mayFlatten) {
+      // not there: the other side's piece shrunk to its start point (not drawn); the morph draws it (see drawnPieces)
+      const otherPiece = pieceForPair(pieceSet, pieceIndex, pieceOther, pieceState, false);
+      return Array.from({ length: pieceLength }, (_, index) => otherPiece[index % 2]);
+    }
     if (pairLayout.flatten && mayFlatten) {
       const [line] = strokesOf(pieceSet, pieceState, pieceIndex);
       if (line.kind !== 'line') throw new Error(`flatten: state "${pieceState}" must be one straight line`);
@@ -365,4 +385,164 @@ export const shapeForPair = (
     return pairLayout.rotation ? rotateAroundCenter(reordered, pairLayout.rotation) : reordered;
   };
   return piecesOf(iconSet).flatMap((pieceSet, pieceIndex) => pieceForPair(pieceSet, pieceIndex, state, otherState, true));
+};
+
+// ---- drawing a piece along its path (PairLayout.draw) ----
+
+/** Rough length of a cubic segment: the average of its chord and its control polygon. */
+const segmentLength = ([start, control1, control2, end]: CubicSegment): number => {
+  const distance = (from: Point, to: Point) => Math.hypot(to[0] - from[0], to[1] - from[1]);
+  return (distance(start, end) + distance(start, control1) + distance(control1, control2) + distance(control2, end)) / 2;
+};
+
+/**
+ * The part of a piece between two shares of its length (0…1). The segments outside shrink to the part's ends,
+ * so the number count stays the same.
+ */
+const pieceBetween = (piece: PathNumbers, fromFraction: number, toFraction: number): PathNumbers => {
+  const segments = toSegments(piece);
+  const lengths = segments.map(segmentLength);
+  const totalLength = lengths.reduce((sum, length) => sum + length, 0);
+  const from = fromFraction * totalLength, to = toFraction * totalLength;
+  let travelled = 0;
+  const parts = segments.map((segment, index): CubicSegment | null => {
+    const segmentStart = travelled;
+    travelled += lengths[index];
+    if (!lengths[index] || travelled <= from || segmentStart >= to) return null;
+    const startProgress = Math.max(0, (from - segmentStart) / lengths[index]);
+    const endProgress = Math.min(1, (to - segmentStart) / lengths[index]);
+    const [head] = splitCubic(segment, endProgress);
+    return startProgress > 0 ? splitCubic(head, startProgress / endProgress)[1] : head;
+  });
+  // before the part: its start point; after (or between): the end of the part drawn so far
+  let pen: Point = parts.find((part) => part)?.[0] ?? segments[0][0];
+  return fromSegments(parts.map((part): CubicSegment => {
+    if (!part) return [pen, pen, pen, pen];
+    pen = part[3];
+    return part;
+  }));
+};
+
+/** The first `fraction` (0…1) of a piece along its length, as if a pen had drawn that far. */
+export const trimPiece = (piece: PathNumbers, fraction: number): PathNumbers =>
+  pieceBetween(piece, 0, Math.min(Math.max(fraction, 0), 1));
+
+/** The x range a wipe's edge moves through (the icon box's drawing area, line width included). */
+const WIPE_FROM_X = 2;
+const WIPE_TO_X = 22;
+const WIPE_SAMPLES_PER_SEGMENT = 40;
+
+/** Points along a piece as [share of its length, x]. */
+const xAlong = (piece: PathNumbers): [number, number][] => {
+  const segments = toSegments(piece);
+  const lengths = segments.map(segmentLength);
+  const totalLength = lengths.reduce((sum, length) => sum + length, 0) || 1;
+  const samples: [number, number][] = [];
+  let travelled = 0;
+  segments.forEach((segment, index) => {
+    for (let step = 0; step <= WIPE_SAMPLES_PER_SEGMENT; step++) {
+      const progress = step / WIPE_SAMPLES_PER_SEGMENT;
+      const [x] = progress < 1 ? splitCubic(segment, progress)[1][0] : segment[3];
+      samples.push([(travelled + progress * lengths[index]) / totalLength, x]);
+    }
+    travelled += lengths[index];
+  });
+  return samples;
+};
+
+/**
+ * The x range a morph's wipe edge moves through: the box (x 2…22), or — if a piece slides in — from the box's side
+ * to that piece's leading side at rest, so the edge rides at its front and it starts just outside the box.
+ */
+export const wipeRange = (slidingPiece: PathNumbers | null, direction: 'left' | 'right'): [number, number] => {
+  if (!slidingPiece) return [WIPE_FROM_X, WIPE_TO_X];
+  const xs = xAlong(slidingPiece).map(([, x]) => x);
+  return direction === 'right' ? [WIPE_FROM_X, Math.max(...xs)] : [Math.min(...xs), WIPE_TO_X];
+};
+
+/**
+ * A piece behind a vertical edge (PairLayout.wipe): at `fraction` 0…1 of the wipe, the edge has moved that far
+ * through `edgeRange` in `direction`, and only the part it has passed shows. That part must be one stretch of the
+ * path. `slides` (PairLayout.slide): the piece moves with the edge from outside the box; only its part inside shows.
+ */
+export const wipePiece = (
+  piece: PathNumbers, fraction: number, direction: 'left' | 'right',
+  edgeRange: [number, number] = [WIPE_FROM_X, WIPE_TO_X], slides = false,
+): PathNumbers => {
+  if (fraction >= 1) return piece.slice();
+  const [fromX, toX] = edgeRange;
+  if (slides) {
+    // in the piece's own frame the box's side moves the other way: the leading part shows first
+    const shift = (1 - Math.max(fraction, 0)) * (toX - fromX) * (direction === 'right' ? -1 : 1);
+    return wipePiece(piece, fraction, direction === 'right' ? 'left' : 'right', edgeRange)
+      .map((value, index) => (index % 2 ? value : value + shift));
+  }
+  const travel = Math.max(fraction, 0) * (toX - fromX);
+  const edge = direction === 'right' ? fromX + travel : toX - travel;
+  // samples along the length: [share of the length, > 0 where the edge has passed]
+  const samples = xAlong(piece).map(([share, x]): [number, number] => [share, direction === 'right' ? edge - x : x - edge]);
+  const first = samples.findIndex(([, passed]) => passed >= 0);
+  if (first < 0) return pieceBetween(piece, 0, 0);
+  let last = samples.length - 1;
+  while (samples[last][1] < 0) last--;
+  // where the edge crosses between two samples
+  const crossing = ([shareA, passedA]: [number, number], [shareB, passedB]: [number, number]) =>
+    shareA + (shareB - shareA) * (passedA / (passedA - passedB));
+  const from = first > 0 ? crossing(samples[first - 1], samples[first]) : 0;
+  const to = last < samples.length - 1 ? crossing(samples[last], samples[last + 1]) : 1;
+  return pieceBetween(piece, from, to);
+};
+
+/** A piece drawn along its path during a morph: drawn in (it appears) or erased (it goes). */
+export interface DrawnPiece {
+  pieceIndex: number;
+  drawsIn: boolean;
+  /** When the drawing in happens: from `start` to `end` of the morph (0…1); erasing runs it in reverse. */
+  start: number;
+  end: number;
+  /** Revealed behind a moving edge instead of along its path (PairLayout.wipe), moving with it (PairLayout.slide). */
+  wipe?: 'left' | 'right';
+  slide?: boolean;
+}
+
+/** The pieces drawn (or erased) along their path when morphing `state` → `otherState` (PairLayout.draw). */
+export const drawnPieces = (iconSet: IconSet, state: string, otherState: string): DrawnPiece[] =>
+  piecesOf(iconSet).flatMap((pieceSet, pieceIndex): DrawnPiece[] => {
+    const windowOf = (draw: NonNullable<PairLayout['draw']>) =>
+      (Array.isArray(draw) ? draw : typeof draw === 'number' ? [1 - draw, 1] : [0, 1]);
+    // the layout of the state where the piece is absent
+    const absentIn = (absentState: string, presentState: string) => {
+      const pairLayout = pieceSet.pairLayouts[absentState]?.[presentState];
+      return pairLayout?.draw || pairLayout?.wipe ? pairLayout : undefined;
+    };
+    const drawIn = absentIn(state, otherState);
+    const pairLayout = drawIn ?? absentIn(otherState, state);
+    if (!pairLayout) return [];
+    const [start, end] = windowOf(pairLayout.draw || true);
+    return [{ pieceIndex, drawsIn: Boolean(drawIn), start, end, wipe: pairLayout.wipe, slide: pairLayout.slide }];
+  });
+
+/**
+ * A frame of a morph `from` → `to` at `progress` with the drawn pieces replaced: drawn in from the start along
+ * `to`'s piece, or erased back along `from`'s piece.
+ */
+export const withDrawnPieces = (
+  frame: PathNumbers, from: PathNumbers, to: PathNumbers, progress: number, pieceLength: number, drawn: DrawnPiece[],
+): PathNumbers => {
+  if (!drawn.length) return frame;
+  const presentPiece = ({ pieceIndex, drawsIn }: DrawnPiece) =>
+    (drawsIn ? to : from).slice(pieceIndex * pieceLength, (pieceIndex + 1) * pieceLength);
+  // one edge for every wipe of the morph, riding at the front of the (first) sliding piece
+  const slider = drawn.find((piece) => piece.slide && piece.wipe);
+  const edgeRange = wipeRange(slider ? presentPiece(slider) : null, slider?.wipe ?? 'right');
+  const result = frame.slice();
+  for (const drawnPiece of drawn) {
+    const { pieceIndex, drawsIn, start, end, wipe, slide } = drawnPiece;
+    const present = presentPiece(drawnPiece);
+    // erasing is drawing in played backwards
+    const fraction = ((drawsIn ? progress : 1 - progress) - start) / (end - start);
+    result.splice(pieceIndex * pieceLength, pieceLength,
+      ...(wipe ? wipePiece(present, fraction, wipe, edgeRange, slide) : trimPiece(present, fraction)));
+  }
+  return result;
 };

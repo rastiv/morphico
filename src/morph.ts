@@ -2,7 +2,8 @@
 import { animate, easings } from './engine.ts';
 import type { Easing } from './engine.ts';
 import {
-  defaultShapes, interpolate, pieceLengthOf, rotateAroundCenter, scaleAroundCenter, shapeForPair, toPathData,
+  defaultShapes, drawnPieces, interpolate, pieceLengthOf, rotateAroundCenter, scaleAroundCenter, shapeForPair, toPathData,
+  withDrawnPieces,
 } from './geometry.ts';
 import type { IconSet, PathNumbers } from './types.ts';
 
@@ -116,6 +117,8 @@ export const createMorphingPath = (pathElement: SVGPathElement, iconSet: IconSet
       const from = start ?? scaleAroundCenter(target!, EMPTY_SCALE);
       const to = target ?? scaleAroundCenter(start!, EMPTY_SCALE);
       const spin = (settled && iconSet.spins[previousState]?.[nextState]) || 0;
+      // pieces that appear or go are drawn along their path (only from a settled shape, between two real states)
+      const drawn = settled && start && target ? drawnPieces(iconSet, previousState, nextState) : [];
       const ease = typeof easing === 'function' ? easing : easings[easing];
       const startTime = performance.now();
 
@@ -124,7 +127,8 @@ export const createMorphingPath = (pathElement: SVGPathElement, iconSet: IconSet
           const progress = clampToUnit((frameTime - startTime) / duration);
           if (progress < 1) {
             const easedProgress = ease(progress);
-            render(blend(from, to, easedProgress, spin), startOpacity + (endOpacity - startOpacity) * easedProgress);
+            const frame = withDrawnPieces(blend(from, to, easedProgress, spin), from, to, easedProgress, pieceLength, drawn);
+            render(frame, startOpacity + (endOpacity - startOpacity) * easedProgress);
             return true;
           }
           render(target, endOpacity);

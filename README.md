@@ -41,6 +41,12 @@ Icon sets (based on [Lucide](https://lucide.dev)):
 | Set | States |
 | --- | --- |
 | `media` | `play`, `pause`, `stop` |
+| `menu` | `menu` (☰), `close` (✕), `back` (←) |
+| `checkbox` | `unchecked` (☐), `checked` (☑), `checked-big` (✓ breaking out of the box) |
+| `radio` | `unchecked` (○), `checked` (✓ in a circle), `checked-big` (✓ breaking out of the circle) |
+| `folder` | `closed`, `open` |
+| `theme` | `light` (sun), `dark` (moon) |
+| `weather` | `sunny`, `frosty`, `partly-cloudy`, `showers`, `cloudy`, `thunder`, `rain`, `snow`, `drizzle` |
 
 ```ts
 const player = icon(button, { set: 'media', state: 'play' });
@@ -67,7 +73,7 @@ clock.destroy();
 
 | Option | For | Default | |
 | --- | --- | --- | --- |
-| `set` | both | `'round'` | digits: `'round'`, `'square'`, `'condensed'`, `'slim'`, `'handwritten'`; icons (`icon()` only): `'media'` |
+| `set` | both | `'round'` | digits: `'round'`, `'square'`, `'condensed'`, `'slim'`, `'handwritten'`; icons (`icon()` only): `'media'`, `'menu'`, `'checkbox'`, `'radio'`, `'folder'`, `'theme'`, `'weather'` |
 | `state` / `value` | icon / text | empty | What is shown first |
 | `size` | both | `'1em'` | CSS size (icon: width and height; text: height). `1em` follows the font size |
 | `duration` | both | `400` | Milliseconds |

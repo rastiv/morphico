@@ -3,8 +3,8 @@
 // own look the same way the library options do (strokeWidth, lineCap, lineJoin, fill, roundness).
 import { animate, easings } from '../src/engine.ts';
 import {
-  defaultShapes, interpolate, pieceLengthOf, rotateAroundCenter, scaleAroundCenter, shapeForPair, splitPieces, toPathData,
-  toSegments,
+  defaultShapes, drawnPieces, interpolate, pieceLengthOf, rotateAroundCenter, scaleAroundCenter, shapeForPair, splitPieces,
+  toPathData, toSegments, withDrawnPieces,
 } from '../src/geometry.ts';
 import { iconSets, resolveIconSet } from '../src/iconSets.ts';
 import type { IconSetName } from '../src/iconSets.ts';
@@ -97,6 +97,8 @@ let shapes: Record<string, PathNumbers> = {};
 let morphFrom: PathNumbers | null = null;
 let morphTo: PathNumbers | null = null;
 let spinAngle = 0;
+/** Pieces drawn along their path in the current morph (PairLayout.draw). */
+let drawn: ReturnType<typeof drawnPieces> = [];
 /** Opacity at the start and end of the morph: only the empty state is faded (0). */
 let fade = { from: 1, to: 1 };
 let currentPath: PathNumbers | null = null;
@@ -187,6 +189,7 @@ function goTo(state: string): void {
   if (!drawable(state) || !drawable(previousState) || (!currentPath && previousState !== EMPTY) || state === previousState) {
     // nothing to morph from or to: jump
     morphFrom = morphTo = shapes[state] ?? null;
+    drawn = [];
     fade = { from: 1, to: 1 };
     spinAngle = 0;
     settled = true;
@@ -201,6 +204,7 @@ function goTo(state: string): void {
   const from = start ?? scaleAroundCenter(target!, EMPTY_SCALE);
   const to = target ?? scaleAroundCenter(start!, EMPTY_SCALE);
   fade = { from: previousState === EMPTY ? 0 : 1, to: state === EMPTY ? 0 : 1 };
+  drawn = settled && start && target ? drawnPieces(iconSet, previousState, state) : [];
   morphFrom = from;
   morphTo = to;
   spinAngle = (settled && iconSet.spins[previousState]?.[state]) || 0;
@@ -213,7 +217,7 @@ function goTo(state: string): void {
     showProgress(progress);
     const easedProgress = easeProgress(progress);
     showOpacity(fade.from + (fade.to - fade.from) * easedProgress);
-    render(blend(from, to, easedProgress, spinAngle));
+    render(withDrawnPieces(blend(from, to, easedProgress, spinAngle), from, to, easedProgress, pieceLengthOf(iconSet), drawn));
     if (progress >= 1) settled = true;
     return progress < 1;
   });
@@ -440,7 +444,9 @@ progressInput.oninput = () => {
   progressOutput.textContent = progress.toFixed(2);
   const easedProgress = easing()(progress);
   showOpacity(fade.from + (fade.to - fade.from) * easedProgress);
-  if (morphFrom && morphTo) render(blend(morphFrom, morphTo, easedProgress, spinAngle));
+  if (morphFrom && morphTo) {
+    render(withDrawnPieces(blend(morphFrom, morphTo, easedProgress, spinAngle), morphFrom, morphTo, easedProgress, pieceLengthOf(iconSet), drawn));
+  }
 };
 
 for (const color of PRESET_COLORS) {

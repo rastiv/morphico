@@ -17,9 +17,12 @@ if (!states.length) {
 
 const pieceLength = pieceLengthOf(iconSet);
 
-/** Points along every piece of the path, `samplesPerSegment + 1` per segment. */
+/** A piece shrunk to one point is not drawn (see toPathData), so it is not part of the picture. */
+const isPoint = (piece: PathNumbers) => piece.every((value, index) => Math.abs(value - piece[index % 2]) < 1e-6);
+
+/** Points along every drawn piece of the path, `samplesPerSegment + 1` per segment. */
 const samplePoints = (path: PathNumbers, samplesPerSegment = 60): Point[] =>
-  splitPieces(path, pieceLength).flatMap(toSegments).flatMap(([start, control1, control2, end]) => Array.from({ length: samplesPerSegment + 1 }, (_, sample): Point => {
+  splitPieces(path, pieceLength).filter((piece) => !isPoint(piece)).flatMap(toSegments).flatMap(([start, control1, control2, end]) => Array.from({ length: samplesPerSegment + 1 }, (_, sample): Point => {
     const progress = sample / samplesPerSegment, remaining = 1 - progress;
     const weights = [remaining ** 3, 3 * remaining ** 2 * progress, 3 * remaining * progress ** 2, progress ** 3];
     const along = (axis: 0 | 1) => weights[0] * start[axis] + weights[1] * control1[axis] + weights[2] * control2[axis] + weights[3] * end[axis];

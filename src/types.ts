@@ -62,6 +62,28 @@ export interface PairLayout {
    * The other side keeps its own layout for this pair. Overrides every option above.
    */
   flatten?: boolean;
+  /**
+   * The piece is not there in this state: during the morph the other state's piece is drawn along its own path,
+   * like a pen writing it (erased back the same way in reverse). Overrides every option above.
+   * A number (0…1) is the share of the morph the drawing takes: erasing happens at its start, drawing in at its end.
+   * `[start, end]` (0…1): drawing in happens between these points of the morph (e.g. to stagger several pieces);
+   * erasing runs the same in reverse (between `1 - end` and `1 - start`).
+   */
+  draw?: boolean | number | [start: number, end: number];
+  /**
+   * Like `draw`, but the piece is revealed behind a vertical edge moving across the icon box (x 2…22) in this
+   * direction instead of along its path (hidden the same way in reverse). Every wiped piece of a morph uses the same
+   * edge, so a cloud can cover a sun as it moves in. Timing from `draw` if given (else the whole morph).
+   * The piece's visible part must be one stretch of its path: lay it out to start where the edge reaches it last.
+   */
+  wipe?: 'left' | 'right';
+  /**
+   * With `wipe`: the piece moves in with the edge instead of standing still — it slides in from just outside the
+   * box's side (x 2 or 22; the part outside the box is not shown), its leading side riding at the edge, so it covers
+   * what the edge wipes away (a cloud crawling over the sun). Other sliding pieces of the morph move along with the
+   * first one (rain with its cloud).
+   */
+  slide?: boolean;
 }
 
 /** How a set's characters sit in the narrow cells of `text()`. Numbers are in grid units (digits are 16 high). */
