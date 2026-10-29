@@ -1,6 +1,8 @@
 // Preview page (dev only, not published). Served as JavaScript by tools/serve.ts.
-// Two tabs: Digits (digit sets + the text line) and Icons (icon families). The style panel overrides the set's
-// own look the same way the library options do (strokeWidth, lineCap, lineJoin, fill, roundness).
+// Three tabs: Digits (digit sets + the text line), Icons (icon families) and Clip (clip.ts: an element cut out by a
+// morphing shape). The style panel overrides the set's own look the same way the library options do (strokeWidth,
+// lineCap, lineJoin, fill, roundness).
+import './clip.ts';
 import { animate, easings } from '../src/engine.ts';
 import {
   defaultShapes, drawnPieces, interpolate, pieceLengthOf, rotateAroundCenter, scaleAroundCenter, shapeForPair, splitPieces,
@@ -14,14 +16,16 @@ import { text } from '../src/text.ts';
 import type { Text } from '../src/text.ts';
 import type { IconSet, PathNumbers } from '../src/types.ts';
 
-type Tab = 'digits' | 'icons';
+/** Tabs that show icon sets (the Clip tab has its own view). */
+type SetTab = 'digits' | 'icons';
+type Tab = SetTab | 'clip';
 /** What the style panel changes; a missing value means "the set's own". */
 interface StyleChoices extends StyleOptions {
   roundness?: number;
 }
 
 const SET_NAMES = Object.keys(iconSets) as IconSetName[];
-const DEFAULT_SETS: Record<Tab, IconSetName> = { digits: 'round', icons: 'media' };
+const DEFAULT_SETS: Record<SetTab, IconSetName> = { digits: 'round', icons: 'media' };
 /** Buttons of a digit set: the digits, then the other characters text() shows (space = empty). */
 const DIGIT_SET_STATES = [...'0123456789-:.,/ '];
 const EMPTY = ' ';
@@ -38,6 +42,8 @@ const elementById = <ElementType extends Element = HTMLElement>(id: string): Ele
   return element as unknown as ElementType;
 };
 const tabButtons = elementById('tabs');
+const setsView = elementById('sets-view');
+const clipView = elementById('clip-view');
 const setButtons = elementById('set-buttons');
 const stateButtons = elementById('state-buttons');
 const morphPath = elementById<SVGPathElement>('morph-path');
@@ -89,7 +95,8 @@ const readStyleChoices = (): StyleChoices => {
   try { return JSON.parse(settings.read('style') ?? '{}') as StyleChoices; } catch { return {}; }
 };
 
-let tab: Tab = 'digits';
+/** The last set tab (Digits or Icons) — stays while the Clip tab is shown. */
+let tab: SetTab = 'digits';
 let iconSetName: IconSetName = DEFAULT_SETS.digits;
 let iconSet: IconSet = iconSets[iconSetName]; // with the chosen corner radius
 let style: StyleChoices = readStyleChoices();
@@ -292,12 +299,19 @@ function selectIconSet(setName: IconSetName): void {
 }
 
 function selectTab(nextTab: Tab): void {
-  tab = nextTab;
-  settings.write('tab', tab);
-  history.replaceState(null, '', `#${tab}`);
+  settings.write('tab', nextTab);
+  history.replaceState(null, '', `#${nextTab}`);
   for (const button of tabButtons.querySelectorAll<HTMLButtonElement>('button')) {
-    button.classList.toggle('active', button.dataset.tab === tab);
+    button.classList.toggle('active', button.dataset.tab === nextTab);
   }
+  setsView.hidden = nextTab === 'clip';
+  clipView.hidden = nextTab !== 'clip';
+  if (nextTab === 'clip') {
+    setAutoPlay(false);
+    setLiveClock(false);
+    return;
+  }
+  tab = nextTab;
   setButtons.replaceChildren(...setsOfTab(tab).map((setName) => {
     const button = document.createElement('button');
     button.dataset.set = setName;
@@ -497,6 +511,7 @@ textSizeInput.oninput = () => {
 };
 liveClockToggle.onchange = () => setLiveClock(liveClockToggle.checked);
 
-// the address (#icons / #digits) wins over the remembered tab
-const tabFromAddress = location.hash.slice(1);
-selectTab((tabFromAddress || settings.read('tab')) === 'icons' ? 'icons' : 'digits');
+// the address (#digits / #icons / #clip) wins over the remembered tab
+const TABS: Tab[] = ['digits', 'icons', 'clip'];
+const startTab = location.hash.slice(1) || settings.read('tab');
+selectTab(TABS.find((someTab) => someTab === startTab) ?? 'digits');
