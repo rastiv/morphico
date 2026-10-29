@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 patch = nicer transitions and fixes, minor = new icon sets or options, major = API changes or a changed resting look of an icon.
 
-## Unreleased
+## 0.3.0
 
 - New `clip(element, options)`: cuts any element out by a morphing shape (25 shapes based on Lucide: circle, heart,
   star, shield, speech bubbles, puzzle …). `to(shape, { x, y, size, rotation, roundness })` morphs, moves, resizes and
