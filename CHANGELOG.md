@@ -3,6 +3,13 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 patch = nicer transitions and fixes, minor = new icon sets or options, major = API changes or a changed resting look of an icon.
 
+## Unreleased
+
+- New `clip(element, options)`: cuts any element out by a morphing shape (25 shapes based on Lucide: circle, heart,
+  star, shield, speech bubbles, puzzle …). `to(shape, { x, y, size, rotation, roundness })` morphs, moves, resizes and
+  turns together; `to({ … })` moves without changing the shape; `set()` jumps; `outline: { width, band }` shows only a
+  band along the edge. Positions are the shape's centre in % or px; the shape stays square (1:1).
+
 ## 0.2.0
 
 - The built files carry the full Lucide (ISC) and Feather (MIT) license notices in their header comment;

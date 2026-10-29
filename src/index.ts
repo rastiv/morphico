@@ -1,9 +1,11 @@
 // morphico public API.
+export { clip } from './clip.ts';
 export { easings } from './engine.ts';
 export { icon } from './icon.ts';
 export { iconSets } from './iconSets.ts';
 export { text } from './text.ts';
 
+export type { Clip, ClipChangeOptions, ClipChanges, ClipOptions, ClipOutline, Length } from './clip.ts';
 export type { Easing } from './engine.ts';
 export type { ChangeOptions, Icon, IconOptions } from './icon.ts';
 export type { IconSetName } from './iconSets.ts';

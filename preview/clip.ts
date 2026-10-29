@@ -1,97 +1,21 @@
-// Clip tab of the preview page: an element cut out by a morphing shape (Lucide shapes, clip-shapes.ts), an experiment
-// for the planned clip() layer.
-// Tries both ways a page can cut out an element: `clip-path: url(#id)` with an objectBoundingBox <clipPath>,
-// and `mask-image` with an SVG data URL (how the user's cropper app does it). The shape is always square (1:1),
-// placed by its centre (x, y) and size in % or px of the element, can be turned (also while morphing) and outlined:
-// then only a band along the shape's edge shows. clip-path can't do that (it ignores line width) → the left stage
-// switches to `mask: url(#id)` with an SVG <mask>.
-import { animate, easings } from '../src/engine.ts';
-import { defaultBreakpoints, interpolate, layoutStrokes, toPathData } from '../src/geometry.ts';
-import type { PathNumbers } from '../src/types.ts';
-import { clipShape, clipShapeNames, lucideOutlines } from './clip-shapes.ts';
+// Clip tab of the preview page: the library's clip() on two elements, an <img> and a <div> (any element can be cut
+// out). The shape buttons show the Lucide icons the shapes come from; the controls call to() (animated: shapes,
+// presets) or set() (jump: sliders), and the Code panel shows the matching clip() options.
+import { clip } from '../src/clip.ts';
+import type { Clip, ClipChanges, ClipOutline, Length } from '../src/clip.ts';
+import type { EasingName } from '../src/morph.ts';
+import { defaultBreakpoints, layoutStrokes, toPathData } from '../src/geometry.ts';
+import { lucideShapeOutlines } from '../src/sets/shapes.ts';
 
-const GRID_SIZE = 24;
-const GRID_CENTER = 12;
-/** Enough for the shape that needs the most (puzzle: 24 strokes, its knobs ≈ 40 segments); the rest spreads by length. */
-const SEGMENT_COUNT = 48;
-const FIRST_SHAPE = 'circle';
-
-const SHARP_CORNERS = 0;
-
-let roundness = 1;
-const shapeCache = new Map<string, PathNumbers>();
-
-/** Path numbers of a shape at the current roundness. */
-const shapeNumbers = (name: string): PathNumbers => {
-  const key = `${name}@${roundness}`;
-  let numbers = shapeCache.get(key);
-  if (!numbers) {
-    const strokes = clipShape(name, roundness);
-    numbers = layoutStrokes(strokes, defaultBreakpoints(strokes, SEGMENT_COUNT));
-    shapeCache.set(key, numbers);
-  }
-  return numbers;
-};
-
-// ---- grid → element pixels → objectBoundingBox (0…1) ----
-
-/** A length as clip() will take it: a number = %, or a string `'40%'` / `'120px'`. */
-type Length = number | string;
 type Unit = '%' | 'px';
+type PlacementKey = 'x' | 'y' | 'size';
+type Band = NonNullable<ClipOutline['band']>;
 
-/**
- * Where the square shape sits, as clip() will take it: x, y = its centre (% of the element's width / height),
- * size = its side (% of the width).
- */
-interface Placement {
-  x: Length;
-  y: Length;
-  size: Length;
-}
-
-/** A placement in element pixels: what is on screen and what animates. */
-interface PixelPlacement {
-  centerX: number;
-  centerY: number;
-  side: number;
-}
-
-const unitOf = (length: Length): Unit => (typeof length === 'string' && length.trim().endsWith('px') ? 'px' : '%');
-
-/** `reference` = the element side that 100% means. */
-const lengthToPixels = (length: Length, reference: number): number => {
-  if (typeof length === 'number') return (length / 100) * reference;
-  const value = Number.parseFloat(length);
-  const unit = length.trim().replace(/^[-+\d.e]+/, '');
-  if (Number.isNaN(value) || (unit !== 'px' && unit !== '%')) {
-    throw new Error(`clip: "${length}" is not a length — use a number (= %), '40%' or '120px'`);
-  }
-  return unit === 'px' ? value : (value / 100) * reference;
-};
-
-const placementToPixels = (placement: Placement, elementWidth: number, elementHeight: number): PixelPlacement => ({
-  centerX: lengthToPixels(placement.x, elementWidth),
-  centerY: lengthToPixels(placement.y, elementHeight),
-  side: lengthToPixels(placement.size, elementWidth),
-});
-
-/**
- * The shape in element pixels: scaled to its square, turned around the square's centre, moved into place.
- * Turning in pixels keeps the shape rigid; turning 0…1 numbers would skew it in a non-square element.
- */
-const toElementPixels = (path: PathNumbers, angle: number, { centerX, centerY, side }: PixelPlacement): PathNumbers => {
-  const scale = side / GRID_SIZE;
-  const cos = Math.cos((angle * Math.PI) / 180), sin = Math.sin((angle * Math.PI) / 180);
-  const result: PathNumbers = [];
-  for (let index = 0; index < path.length; index += 2) {
-    const offsetX = (path[index] - GRID_CENTER) * scale, offsetY = (path[index + 1] - GRID_CENTER) * scale;
-    result.push(centerX + offsetX * cos - offsetY * sin, centerY + offsetX * sin + offsetY * cos);
-  }
-  return result;
-};
-
-const toBoundingBox = (pixels: PathNumbers, elementWidth: number, elementHeight: number): PathNumbers =>
-  pixels.map((value, index) => value / (index % 2 ? elementHeight : elementWidth));
+const PLACEMENT_KEYS: PlacementKey[] = ['x', 'y', 'size'];
+const SHAPE_NAMES = Object.keys(lucideShapeOutlines);
+const FIRST_SHAPE = 'circle';
+const BUTTON_SEGMENTS = 48;
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 // ---- the picture: a photo if preview/photo.jpg exists (git-ignored), else a generated landscape ----
 
@@ -122,11 +46,8 @@ const loadPicture = (image: HTMLImageElement): void => {
 
 const byId = <ElementType extends HTMLElement>(id: string): ElementType => document.getElementById(id) as ElementType;
 
-const clipStage = byId<HTMLDivElement>('clip-stage');
-const maskStage = byId<HTMLDivElement>('mask-stage');
-const clipPathShape = document.getElementById('clip-shape') as unknown as SVGPathElement;
-const maskElement = document.getElementById('morph-mask') as unknown as SVGMaskElement;
-const clipCaption = byId<HTMLElement>('clip-caption');
+const imageStage = byId<HTMLImageElement>('clip-image');
+const cardStage = byId<HTMLDivElement>('clip-card');
 const shapeButtons = byId<HTMLDivElement>('shape-buttons');
 const durationInput = byId<HTMLInputElement>('clip-duration');
 const durationOutput = byId<HTMLOutputElement>('clip-duration-output');
@@ -135,14 +56,10 @@ const rotationInput = byId<HTMLInputElement>('rotation');
 const rotationOutput = byId<HTMLOutputElement>('rotation-output');
 const turnCheckbox = byId<HTMLInputElement>('turn-while-morphing');
 const turnSelect = byId<HTMLSelectElement>('turn-amount');
-const PLACEMENT_KEYS = ['x', 'y', 'size'] as const;
-type PlacementKey = (typeof PLACEMENT_KEYS)[number];
 const placementInputs = { x: byId<HTMLInputElement>('place-x'), y: byId<HTMLInputElement>('place-y'), size: byId<HTMLInputElement>('place-size') };
 const placementOutputs = { x: byId<HTMLOutputElement>('place-x-output'), y: byId<HTMLOutputElement>('place-y-output'), size: byId<HTMLOutputElement>('place-size-output') };
 const unitSwitches = [...document.querySelectorAll<HTMLDivElement>('.units')];
 const placementPresets = byId<HTMLDivElement>('placement-presets');
-const placementCode = byId<HTMLPreElement>('placement-code');
-const elementButtons = byId<HTMLDivElement>('element-buttons');
 const boxButtons = byId<HTMLDivElement>('box-buttons');
 const lookButtons = byId<HTMLDivElement>('look-buttons');
 const bandButtons = byId<HTMLDivElement>('band-buttons');
@@ -151,100 +68,31 @@ const bandWidthOutput = byId<HTMLOutputElement>('band-width-output');
 const roundnessInput = byId<HTMLInputElement>('clip-roundness');
 const roundnessOutput = byId<HTMLOutputElement>('clip-roundness-output');
 const playButton = byId<HTMLButtonElement>('play-sequence');
-const pathOutput = byId<HTMLPreElement>('clip-path-output');
+const codeOutput = byId<HTMLPreElement>('clip-code');
 
-for (const image of document.querySelectorAll<HTMLImageElement>('.clip-target img')) loadPicture(image);
-
-/** What is on screen right now (also mid-animation), in element pixels. */
-const current = { shape: shapeNumbers(FIRST_SHAPE), angle: 0, placement: { centerX: 0, centerY: 0, side: 0 } as PixelPlacement };
-/** Where the running animation goes (or what is on screen when nothing moves), as clip() would be given it. */
-const target: { name: string; angle: number; placement: Placement } = { name: FIRST_SHAPE, angle: 0, placement: { x: 50, y: 50, size: 100 } };
-let stopAnimation: (() => void) | null = null;
-let sequenceRun = 0;
-let outlined = false;
-type BandPosition = 'inside' | 'centre' | 'outside';
-let bandPosition: BandPosition = 'inside';
-
-/**
- * SVG markup that is white where the element shows: the filled shape, or a band along its edge.
- * Inside = a line twice as wide, clipped to the shape; outside = a line twice as wide with the shape cut out of it.
- */
-const maskMarkup = (pathData: string, idPrefix: string): string => {
-  if (!outlined) return `<path d="${pathData}" fill="white"/>`;
-  const bandWidth = Number(bandWidthInput.value);
-  const edgeLine = (lineWidth: number, extraAttributes = '') =>
-    `<path d="${pathData}" fill="none" stroke="white" stroke-width="${lineWidth}" stroke-linejoin="miter"${extraAttributes}/>`;
-  switch (bandPosition) {
-    case 'centre': return edgeLine(bandWidth);
-    case 'inside': return `<clipPath id="${idPrefix}-inside"><path d="${pathData}"/></clipPath>`
-      + edgeLine(2 * bandWidth, ` clip-path="url(#${idPrefix}-inside)"`);
-    // painting black over the inside would only work for luminance masks; mask-image uses alpha → cut it out with a mask
-    case 'outside': return `<mask id="${idPrefix}-outside" maskUnits="userSpaceOnUse" x="-100000" y="-100000" width="200000" height="200000">`
-      + `<rect x="-100000" y="-100000" width="200000" height="200000" fill="white"/><path d="${pathData}" fill="black"/></mask>`
-      + edgeLine(2 * bandWidth, ` mask="url(#${idPrefix}-outside)"`);
-  }
-};
-
-const normalizedAngle = (angle: number): number => ((((angle + 180) % 360) + 360) % 360) - 180;
-const interpolateNumber = (from: number, to: number, progress: number): number => from + (to - from) * progress;
+loadPicture(imageStage);
 
 const elementSize = (): { width: number; height: number } => {
-  const { width, height } = clipStage.getBoundingClientRect();
+  const { width, height } = imageStage.getBoundingClientRect();
   return { width, height };
 };
 
+/** The largest square that fits, in px (what clip() does when `size` is not given). */
+const fittingSize = (): string => `${Math.round(Math.min(elementSize().width, elementSize().height))}px`;
+
+/** What the clips show (or move to), as clip() options — also what the controls and the Code panel show. */
+const shown: { state: string; x: Length; y: Length; size: Length; rotation: number; roundness: number; outline: false | ClipOutline } = {
+  state: FIRST_SHAPE, x: 50, y: 50, size: fittingSize(), rotation: 0, roundness: 1, outline: false,
+};
+
+const clips: Clip[] = [imageStage, cardStage].map((element) => clip(element, shown));
+let sequenceRun = 0;
+
+const unitOf = (length: Length): Unit => (typeof length === 'string' && length.trim().endsWith('px') ? 'px' : '%');
+const valueOf = (length: Length): number => (typeof length === 'number' ? length : Number.parseFloat(length));
 /** The element side that 100% means for this key: the width for x and size, the height for y. */
 const referenceFor = (key: PlacementKey): number => (key === 'y' ? elementSize().height : elementSize().width);
-
-const targetInPixels = (): PixelPlacement => {
-  const { width, height } = elementSize();
-  return placementToPixels(target.placement, width, height);
-};
-
-/** A placement written as clip() options, e.g. `{ x: 50, y: 50, size: '120px' }`. */
-const placementAsCode = (placement: Placement): string =>
-  `{ ${PLACEMENT_KEYS.map((key) => `${key}: ${typeof placement[key] === 'string' ? `'${placement[key]}'` : placement[key]}`).join(', ')} }`;
-
-/** Shows the sliders in each key's unit (the unit of the target's value) with fitting ranges. */
-const updateSliderRanges = (): void => {
-  for (const key of PLACEMENT_KEYS) {
-    const unit = unitOf(target.placement[key]);
-    const reference = referenceFor(key);
-    const [minimum, maximum] = key === 'size'
-      ? (unit === '%' ? [5, 200] : [5, Math.round(2 * reference)])
-      : (unit === '%' ? [-25, 125] : [Math.round(-0.25 * reference), Math.round(1.25 * reference)]);
-    placementInputs[key].min = String(minimum);
-    placementInputs[key].max = String(maximum);
-  }
-  for (const unitSwitch of unitSwitches) markActive(unitSwitch, unitOf(target.placement[unitSwitch.dataset.key as PlacementKey]));
-};
-
-const render = (): void => {
-  const { width, height } = elementSize();
-  if (!width || !height) return;
-  const pixels = toElementPixels(current.shape, current.angle, current.placement);
-  const pathData = toPathData(toBoundingBox(pixels, width, height));
-  const pixelPathData = toPathData(pixels);
-  if (outlined) maskElement.innerHTML = maskMarkup(pixelPathData, 'page-mask');
-  else clipPathShape.setAttribute('d', pathData);
-  const maskSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`
-    + `${maskMarkup(pixelPathData, 'data-mask')}</svg>`;
-  const maskUrl = `url("data:image/svg+xml,${encodeURIComponent(maskSvg)}")`;
-  maskStage.style.maskImage = maskUrl;
-  maskStage.style.setProperty('-webkit-mask-image', maskUrl);
-
-  pathOutput.textContent = pathData;
-  rotationInput.value = String(Math.round(normalizedAngle(current.angle)));
-  rotationOutput.textContent = `${rotationInput.value}°`;
-  const pixelValues = { x: current.placement.centerX, y: current.placement.centerY, size: current.placement.side };
-  for (const key of PLACEMENT_KEYS) {
-    const unit = unitOf(target.placement[key]);
-    const value = unit === 'px' ? pixelValues[key] : (pixelValues[key] / referenceFor(key)) * 100;
-    placementInputs[key].value = String(Math.round(value));
-    placementOutputs[key].textContent = `${Math.round(value)}${unit}`;
-  }
-  placementCode.textContent = placementAsCode(target.placement);
-};
+const normalizedAngle = (angle: number): number => ((((angle + 180) % 360) + 360) % 360) - 180;
 
 const markActive = (container: HTMLElement, value: string): void => {
   for (const button of container.querySelectorAll<HTMLButtonElement>('button')) {
@@ -252,68 +100,69 @@ const markActive = (container: HTMLElement, value: string): void => {
   }
 };
 
-/** Animates from what is on screen (also mid-animation) to `target`; resolves when done or interrupted. */
-const animateToTarget = (): Promise<void> => new Promise((resolve) => {
-  stopAnimation?.();
-  markActive(shapeButtons, target.name);
-  const from = { shape: current.shape, angle: current.angle, placement: { ...current.placement } };
-  const to = { shape: shapeNumbers(target.name), angle: target.angle, placement: targetInPixels() };
-  const duration = Number(durationInput.value);
-  const easing = easings[easingSelect.value as keyof typeof easings];
-  let startTime: number | null = null;
-  const removeFrame = animate((frameTime) => {
-    startTime ??= frameTime;
-    const progress = Math.min(1, (frameTime - startTime) / duration);
-    const easedProgress = easing(progress);
-    current.shape = interpolate(from.shape, to.shape, easedProgress);
-    current.angle = interpolateNumber(from.angle, to.angle, easedProgress);
-    current.placement = {
-      centerX: interpolateNumber(from.placement.centerX, to.placement.centerX, easedProgress),
-      centerY: interpolateNumber(from.placement.centerY, to.placement.centerY, easedProgress),
-      side: interpolateNumber(from.placement.side, to.placement.side, easedProgress),
-    };
-    render();
-    if (progress < 1) return true;
-    current.angle = target.angle = normalizedAngle(current.angle);
-    stopAnimation = null;
-    resolve();
-    return false;
-  });
-  stopAnimation = () => { removeFrame(); resolve(); };
-});
-
-const morphTo = (name: string): Promise<void> => {
-  if (name !== target.name && turnCheckbox.checked) target.angle += Number(turnSelect.value);
-  target.name = name;
-  return animateToTarget();
+const asCode = (value: unknown): string => {
+  if (typeof value === 'string') return `'${value}'`;
+  if (value && typeof value === 'object') {
+    return `{ ${Object.entries(value).map(([key, inner]) => `${key}: ${asCode(inner)}`).join(', ')} }`;
+  }
+  return String(value);
 };
 
-const moveTo = (placement: Placement): Promise<void> => {
-  target.placement = placement;
-  updateSliderRanges();
-  return animateToTarget();
+/** Puts the shown options into the controls and the Code panel. */
+const showControls = (): void => {
+  markActive(shapeButtons, shown.state);
+  for (const key of PLACEMENT_KEYS) {
+    const unit = unitOf(shown[key]);
+    const reference = referenceFor(key);
+    const [minimum, maximum] = key === 'size'
+      ? (unit === '%' ? [5, 200] : [5, Math.round(2 * reference)])
+      : (unit === '%' ? [-25, 125] : [Math.round(-0.25 * reference), Math.round(1.25 * reference)]);
+    placementInputs[key].min = String(minimum);
+    placementInputs[key].max = String(maximum);
+    placementInputs[key].value = String(Math.round(valueOf(shown[key])));
+    placementOutputs[key].textContent = `${Math.round(valueOf(shown[key]))}${unit}`;
+  }
+  for (const unitSwitch of unitSwitches) markActive(unitSwitch, unitOf(shown[unitSwitch.dataset.key as PlacementKey]));
+  rotationInput.value = String(Math.round(normalizedAngle(shown.rotation)));
+  rotationOutput.textContent = `${rotationInput.value}°`;
+  roundnessOutput.textContent = shown.roundness === 1 ? 'own' : shown.roundness === 0 ? 'sharp' : shown.roundness.toFixed(2);
+  bandWidthOutput.textContent = `${bandWidthInput.value}px`;
+  const { state, ...changes } = shown;
+  codeOutput.textContent = `clip(element, ${asCode({ state, ...changes })});`;
 };
 
-/** Jumps (no animation) — for sliders being dragged. */
-const jumpToTarget = (): void => {
-  stopAnimation?.();
-  stopAnimation = null;
-  current.shape = shapeNumbers(target.name);
-  current.angle = target.angle;
-  current.placement = targetInPixels();
-  render();
+const motion = () => ({ duration: Number(durationInput.value), easing: easingSelect.value as EasingName });
+
+/** Animates every clip to the shown options (with a new shape if `state` is given). */
+const animateTo = async (changes: ClipChanges & { state?: string }): Promise<void> => {
+  Object.assign(shown, changes);
+  showControls();
+  const { state, ...rest } = changes;
+  const results = await Promise.all(clips.map((oneClip) =>
+    (state ? oneClip.to(state, { ...rest, ...motion() }) : oneClip.to({ ...rest, ...motion() }))));
+  // after a full turn the angle is the same as before: bring it back into −180…180 (no visible change)
+  if (!results.some((result) => result.interrupted) && shown.rotation !== normalizedAngle(shown.rotation)) {
+    jumpTo({ rotation: normalizedAngle(shown.rotation) });
+  }
 };
 
-const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+/** Jumps every clip to the shown options (sliders). */
+const jumpTo = (changes: ClipChanges & { state?: string }): void => {
+  Object.assign(shown, changes);
+  for (const oneClip of clips) oneClip.set(changes);
+  showControls();
+};
+
+// ---- shapes ----
 
 /** A shape button shows the Lucide icon as Lucide draws it. */
 const iconButton = (name: string): HTMLButtonElement => {
-  const strokes = lucideOutlines[name];
+  const strokes = lucideShapeOutlines[name];
   const icon = document.createElementNS(SVG_NAMESPACE, 'svg');
   icon.setAttribute('viewBox', '0 0 24 24');
   icon.setAttribute('aria-hidden', 'true');
   const path = document.createElementNS(SVG_NAMESPACE, 'path');
-  path.setAttribute('d', toPathData(layoutStrokes(strokes, defaultBreakpoints(strokes, SEGMENT_COUNT))));
+  path.setAttribute('d', toPathData(layoutStrokes(strokes, defaultBreakpoints(strokes, BUTTON_SEGMENTS))));
   icon.append(path);
   const button = document.createElement('button');
   button.title = name;
@@ -323,7 +172,12 @@ const iconButton = (name: string): HTMLButtonElement => {
   return button;
 };
 
-for (const name of clipShapeNames) {
+const morphTo = (name: string): Promise<void> => {
+  const turn = name !== shown.state && turnCheckbox.checked ? Number(turnSelect.value) : 0;
+  return animateTo({ state: name, rotation: shown.rotation + turn });
+};
+
+for (const name of SHAPE_NAMES) {
   const button = iconButton(name);
   button.addEventListener('click', () => { sequenceRun++; morphTo(name); });
   shapeButtons.append(button);
@@ -331,24 +185,23 @@ for (const name of clipShapeNames) {
 
 playButton.addEventListener('click', async () => {
   const run = ++sequenceRun;
-  for (const name of clipShapeNames) {
+  for (const name of SHAPE_NAMES) {
     if (run !== sequenceRun) return;
-    if (name === target.name) continue;
+    if (name === shown.state) continue;
     await morphTo(name);
     await new Promise((resolve) => setTimeout(resolve, 300));
   }
 });
 
+// ---- motion, rotation, position ----
+
 durationInput.addEventListener('input', () => { durationOutput.textContent = `${durationInput.value} ms`; });
-rotationInput.addEventListener('input', () => {
-  target.angle = Number(rotationInput.value);
-  jumpToTarget();
-});
+rotationInput.addEventListener('input', () => jumpTo({ rotation: Number(rotationInput.value) }));
+
 for (const key of PLACEMENT_KEYS) {
   placementInputs[key].addEventListener('input', () => {
     const value = Number(placementInputs[key].value);
-    target.placement = { ...target.placement, [key]: unitOf(target.placement[key]) === 'px' ? `${value}px` : value };
-    jumpToTarget();
+    jumpTo({ [key]: unitOf(shown[key]) === 'px' ? `${value}px` : value });
   });
 }
 
@@ -358,22 +211,15 @@ for (const unitSwitch of unitSwitches) {
   for (const button of unitSwitch.querySelectorAll<HTMLButtonElement>('button')) {
     button.addEventListener('click', () => {
       const reference = referenceFor(key);
-      const pixels = lengthToPixels(target.placement[key], reference);
-      target.placement = { ...target.placement, [key]: button.dataset.value === 'px' ? `${Math.round(pixels)}px` : Math.round((pixels / reference) * 100) };
-      updateSliderRanges();
-      jumpToTarget();
+      const length = shown[key];
+      const pixels = unitOf(length) === 'px' ? valueOf(length) : (valueOf(length) / 100) * reference;
+      jumpTo({ [key]: button.dataset.value === 'px' ? `${Math.round(pixels)}px` : Math.round((pixels / reference) * 100) });
     });
   }
 }
 
-/** The largest square that fits, in the middle of the element. */
-const centredPlacement = (): Placement => {
-  const { width, height } = elementSize();
-  return { x: 50, y: 50, size: `${Math.round(Math.min(width, height))}px` };
-};
-
-const presets: Record<string, () => Placement> = {
-  'middle, fit': centredPlacement,
+const presets: Record<string, () => ClipChanges> = {
+  'middle, fit': () => ({ x: 50, y: 50, size: fittingSize() }),
   'middle, small': () => ({ x: 50, y: 50, size: 30 }),
   'top left': () => ({ x: 27.5, y: 30, size: 35 }),
   'px': () => ({ x: '90px', y: '80px', size: '120px' }),
@@ -383,73 +229,50 @@ const presets: Record<string, () => Placement> = {
 for (const [name, placement] of Object.entries(presets)) {
   const button = document.createElement('button');
   button.textContent = name;
-  button.addEventListener('click', () => moveTo(placement()));
+  button.addEventListener('click', () => animateTo(placement()));
   placementPresets.append(button);
-}
-
-for (const button of elementButtons.querySelectorAll<HTMLButtonElement>('button')) {
-  button.addEventListener('click', () => {
-    const element = button.dataset.value ?? 'img';
-    for (const stage of [clipStage, maskStage]) stage.dataset.element = element;
-    markActive(elementButtons, element);
-  });
 }
 
 for (const button of boxButtons.querySelectorAll<HTMLButtonElement>('button')) {
   button.addEventListener('click', () => {
     document.documentElement.style.setProperty('--box-ratio', button.dataset.value ?? '1');
     markActive(boxButtons, button.dataset.value ?? '');
-    target.placement = centredPlacement();
-    updateSliderRanges();
-    jumpToTarget();
+    // the elements resize at once (clip() follows by itself); the preview re-centres the shape for the new proportions
+    jumpTo({ x: 50, y: 50, size: fittingSize() });
   });
 }
 
-/** Filled: the left stage uses clip-path. Outlined: clip-path can't show a band, so it uses the SVG <mask>. */
-const updateLook = (): void => {
-  const pageMask = outlined ? 'url(#morph-mask)' : 'none';
-  clipStage.style.clipPath = outlined ? 'none' : 'url(#morph-clip)';
-  clipStage.style.mask = pageMask;
-  clipStage.style.setProperty('-webkit-mask', pageMask);
-  clipCaption.innerHTML = outlined ? '<code>mask: url(#id)</code> — clip-path has no line width' : '<code>clip-path: url(#id)</code>';
-  bandWidthOutput.textContent = `${bandWidthInput.value}px`;
-  roundnessOutput.textContent = roundness === 1 ? 'own' : roundness === SHARP_CORNERS ? 'sharp' : roundness.toFixed(2);
-  render();
-};
+// ---- look ----
+
+let outlined = false;
+let band: Band = 'inside';
+const outlineChange = (): ClipChanges => ({ outline: outlined ? { width: Number(bandWidthInput.value), band } : false });
+
 for (const button of lookButtons.querySelectorAll<HTMLButtonElement>('button')) {
   button.addEventListener('click', () => {
     outlined = button.dataset.value === 'outlined';
     markActive(lookButtons, button.dataset.value ?? '');
-    updateLook();
+    jumpTo(outlineChange());
   });
 }
 for (const button of bandButtons.querySelectorAll<HTMLButtonElement>('button')) {
   button.addEventListener('click', () => {
-    bandPosition = button.dataset.value as BandPosition;
-    markActive(bandButtons, bandPosition);
-    updateLook();
+    band = button.dataset.value as Band;
+    markActive(bandButtons, band);
+    jumpTo(outlineChange());
   });
 }
-bandWidthInput.addEventListener('input', updateLook);
-roundnessInput.addEventListener('input', () => {
-  roundness = Number(roundnessInput.value);
-  jumpToTarget();
-  updateLook();
-});
+bandWidthInput.addEventListener('input', () => jumpTo(outlineChange()));
+roundnessInput.addEventListener('input', () => jumpTo({ roundness: Number(roundnessInput.value) }));
 
-// % values follow the element's size, px values stay; a running animation picks up the new size at its next start.
-// The tab starts hidden (size 0): the first real size places the shape in the middle.
-let placedYet = false;
+// the tab starts hidden (size 0): once the elements have a size, fit the shape and show the controls
+let fittedYet = false;
 new ResizeObserver(() => {
   if (!elementSize().width) return;
-  if (!placedYet) {
-    placedYet = true;
-    target.placement = centredPlacement();
+  if (!fittedYet) {
+    fittedYet = true;
+    jumpTo({ size: fittingSize() });
   }
-  if (!stopAnimation) current.placement = targetInPixels();
-  updateSliderRanges();
-  render();
-}).observe(clipStage);
-markActive(shapeButtons, target.name);
-updateSliderRanges();
-updateLook();
+  showControls();
+}).observe(imageStage);
+showControls();

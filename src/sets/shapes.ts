@@ -1,18 +1,19 @@
-// Shapes of the Clip tab (experiment for the planned clip() layer), from Lucide 1.61.0 (ISC, see LICENSE-lucide),
-// imported by `node tools/import-lucide.ts <name>`; tag without its dot. The second batch (squircle … puzzle) was
-// suggested by Claude and chosen by the user. `lucideOutlines` = as Lucide draws them (for
-// the buttons); `clipShape(name, roundness)` = the same outline with its corners rounded less (or sharp), made
-// comparable for morphing: clockwise, starting where it crosses the vertical middle at the top, scaled evenly to fill
-// the 24×24 box and centred.
-import { arc, cubic, ellipse, line, reversedStroke, strokePiece } from '../src/geometry.ts';
-import type { Point, Stroke } from '../src/types.ts';
+// Shapes for clip(): closed outlines that cut out an element. From Lucide 1.61.0 (ISC, see LICENSE-lucide), imported
+// by `node tools/import-lucide.ts <name>`; tag without its dot. The states are the Lucide outlines made comparable for
+// morphing: clockwise, starting where the outline crosses the vertical middle at the top, scaled evenly to fill the
+// 24×24 box and centred (computed on first use, not at import). Roundness 1 = Lucide's own corners … 0 = sharp.
+import { arc, cubic, ellipse, line, reversedStroke, strokePiece } from '../geometry.ts';
+import type { IconSet, Point, Stroke } from '../types.ts';
 
 const DEGREE = Math.PI / 180;
 const GRID_SIZE = 24;
 const GRID_CENTER = 12;
 const SAMPLES_PER_STROKE = 48;
+/** Enough for the shape that needs the most (puzzle: 24 strokes, its knobs ≈ 40 segments); the rest spreads by length. */
+const SEGMENT_COUNT = 48;
 
-export const lucideOutlines: Record<string, Stroke[]> = {
+/** The shapes as Lucide draws them (Lucide coordinates); the set's states are made from these. */
+export const lucideShapeOutlines: Record<string, Stroke[]> = {
   circle: [arc(12, 12, 10, -90, 270)],
   ellipse: ellipse(12, 12, 10, 6),
   heart: [
@@ -393,7 +394,7 @@ const withMovedEnd = (stroke: Stroke, which: 'start' | 'end', point: Point): Str
  * directions meet: radius × roundness, angles unchanged. At 0 the arc is a point on the corner. Same strokes in the
  * same order at any roundness, so morphs keep working.
  */
-const withRoundness = (strokes: Stroke[], roundness: number): Stroke[] => {
+const withCornerRoundness = (strokes: Stroke[], roundness: number): Stroke[] => {
   const result = strokes.slice();
   strokes.forEach((stroke, index) => {
     const previousIndex = (index - 1 + strokes.length) % strokes.length, nextIndex = (index + 1) % strokes.length;
@@ -413,17 +414,26 @@ const withRoundness = (strokes: Stroke[], roundness: number): Stroke[] => {
   return result;
 };
 
-const shapeCache = new Map<string, Stroke[]>();
-
-/** The clip shape `name` at a roundness (0 = sharp corners … 1 = Lucide's own), made comparable for morphing. */
-export const clipShape = (name: string, roundness = 1): Stroke[] => {
-  const key = `${name}@${roundness}`;
-  let strokes = shapeCache.get(key);
-  if (!strokes) {
-    strokes = startAtTopMiddle(clockwise(fitToBox(withRoundness(lucideOutlines[name], roundness))));
-    shapeCache.set(key, strokes);
-  }
-  return strokes;
+/** The shape set at a roundness (0 = sharp … 1 = Lucide's own corners); its strokes are built on first use. */
+const shapeSetWithRoundness = (roundness: number): IconSet => {
+  let strokes: Record<string, Stroke[]> | null = null;
+  return {
+    get strokes() {
+      strokes ??= Object.fromEntries(Object.entries(lucideShapeOutlines).map(([name, outline]) =>
+        [name, startAtTopMiddle(clockwise(fitToBox(withCornerRoundness(outline, roundness))))]));
+      return strokes;
+    },
+    alternativeStrokes: {},
+    pairLayouts: {},
+    spins: {},
+    segmentCount: SEGMENT_COUNT,
+    // shapes are filled (clip), not stroked; these only matter for the outlined band's corners
+    strokeWidth: 0,
+    lineCap: 'butt',
+    lineJoin: 'miter',
+    withRoundness: shapeSetWithRoundness,
+  };
 };
 
-export const clipShapeNames = Object.keys(lucideOutlines);
+/** The shape set of clip(): states `circle`, `ellipse`, `heart` … `puzzle` (see `lucideShapeOutlines`). */
+export const clipShapes: IconSet = shapeSetWithRoundness(1);

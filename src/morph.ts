@@ -27,11 +27,11 @@ export interface MorphResult {
 export const EMPTY_STATE = ' ';
 /** How small a shape gets while it fades into (or out of) the empty state. */
 const EMPTY_SCALE = 0.3;
-const DEFAULT_DURATION = 400;
+export const DEFAULT_DURATION = 400;
 
 // default layouts of every state, computed once per set on first use (nothing runs at import)
 const shapesBySet = new WeakMap<IconSet, Record<string, PathNumbers>>();
-const shapesOf = (iconSet: IconSet): Record<string, PathNumbers> => {
+export const shapesOf = (iconSet: IconSet): Record<string, PathNumbers> => {
   let shapes = shapesBySet.get(iconSet);
   if (!shapes) {
     shapes = defaultShapes(iconSet);
@@ -42,7 +42,7 @@ const shapesOf = (iconSet: IconSet): Record<string, PathNumbers> => {
 
 export const hasState = (iconSet: IconSet, state: string): boolean => state === EMPTY_STATE || state in iconSet.strokes;
 
-const prefersReducedMotion = (): boolean =>
+export const prefersReducedMotion = (): boolean =>
   typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** Blends towards the target in the start's frame while turning that frame by spin · progress. */
@@ -50,7 +50,7 @@ const blend = (from: PathNumbers, to: PathNumbers, progress: number, spin: numbe
   ? rotateAroundCenter(interpolate(from, rotateAroundCenter(to, -spin), progress), spin * progress)
   : interpolate(from, to, progress));
 
-const clampToUnit = (value: number): number => Math.min(Math.max(value, 0), 1);
+export const clampToUnit = (value: number): number => Math.min(Math.max(value, 0), 1);
 
 export interface MorphingPath {
   /** The state shown, or being morphed to. */

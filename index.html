@@ -90,15 +90,13 @@
   .clip-stages figcaption code { color: var(--fg); }
   /* the dashed frame shows the element's box; the element inside it is what gets cut out */
   .clip-frame { position: relative; width: 100%; max-width: 300px; aspect-ratio: var(--box-ratio, 1); outline: 1px dashed var(--faint); }
-  .clip-target { width: 100%; height: 100%; }
-  .clip-target img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .clip-target { display: block; width: 100%; height: 100%; }
+  img.clip-target { object-fit: cover; }
   /* a plain element with content, to show that any element can be cut out (not only images) */
-  .clip-target .card-content { display: grid; align-content: center; gap: 8px; height: 100%; padding: 20px;
+  .card-content { display: grid; align-content: center; gap: 8px; padding: 20px;
     background: linear-gradient(135deg, #ff9a62, #e0508a 45%, #5b4bd6); color: #fff; }
   .card-content h3 { margin: 0; font-size: 26px; line-height: 1.1; }
   .card-content p { margin: 0; font-size: 13px; opacity: 0.9; }
-  .clip-target[data-element=img] .card-content, .clip-target[data-element=div] img { display: none; }
-  #mask-stage { mask-size: 100% 100%; mask-repeat: no-repeat; -webkit-mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; }
   .shape-icons { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 520px; }
   .shape-icons button { width: 42px; height: 42px; padding: 8px; border: 1px solid var(--faint); border-radius: 10px; background: var(--panel); color: var(--dim); cursor: pointer; }
   .shape-icons button:hover { color: var(--fg); }
@@ -236,37 +234,21 @@
   </aside>
 </div>
 
-<!-- Clip tab: an element cut out by a morphing shape (experiment for the planned clip() layer, preview/clip.ts) -->
-<svg width="0" height="0" style="position: absolute" aria-hidden="true">
-  <clipPath id="morph-clip" clipPathUnits="objectBoundingBox">
-    <path id="clip-shape"/>
-  </clipPath>
-  <!-- outlined look: clip-path ignores line width, so the left stage uses this mask instead (pixels of the element) -->
-  <mask id="morph-mask" maskUnits="userSpaceOnUse" x="-100000" y="-100000" width="200000" height="200000"></mask>
-</svg>
-
+<!-- Clip tab: elements cut out by the library's clip() (preview/clip.ts) -->
 <div class="layout" id="clip-view" hidden>
   <main class="workspace">
     <div class="shape-icons" id="shape-buttons" role="group" aria-label="Shape"></div>
 
     <div class="clip-stages">
       <figure>
-        <div class="clip-frame">
-          <div class="clip-target" id="clip-stage" data-element="img">
-            <img alt="Picture cut out by clip-path">
-            <div class="card-content"><h3>Any element</h3><p>A div with text and a gradient background, cut out the same way.</p></div>
-          </div>
-        </div>
-        <figcaption id="clip-caption"><code>clip-path: url(#id)</code></figcaption>
+        <div class="clip-frame"><img class="clip-target" id="clip-image" alt="A picture cut out by clip()"></div>
+        <figcaption><code>&lt;img&gt;</code></figcaption>
       </figure>
       <figure>
         <div class="clip-frame">
-          <div class="clip-target" id="mask-stage" data-element="img">
-            <img alt="Picture cut out by mask-image">
-            <div class="card-content"><h3>Any element</h3><p>A div with text and a gradient background, cut out the same way.</p></div>
-          </div>
+          <div class="clip-target card-content" id="clip-card"><h3>Any element</h3><p>A div with text and a gradient background, cut out the same way.</p></div>
         </div>
-        <figcaption><code>mask-image: url(data:…)</code></figcaption>
+        <figcaption><code>&lt;div&gt;</code></figcaption>
       </figure>
     </div>
 
@@ -307,7 +289,7 @@
           <option value="-360">−360°</option>
         </select>
       </div>
-      <p class="hint">Turning happens in the box's real proportions, so a wide or tall box doesn't skew the shape.</p>
+      <p class="hint">Absolute: <code>rotation: 360</code> ends one full turn from 0. Turning happens in the element's real proportions, so a wide or tall element doesn't skew the shape.</p>
     </section>
 
     <section class="panel">
@@ -321,12 +303,6 @@
         </div>
         <span></span>
 
-        <label>Element</label>
-        <div class="segmented" id="element-buttons">
-          <button data-value="img" class="active">img</button>
-          <button data-value="div">div</button>
-        </div>
-        <span></span>
       </div>
       <p class="hint">Put your own <code>preview/photo.jpg</code> to use a real photo.</p>
     </section>
@@ -350,7 +326,6 @@
         <div class="segmented units" data-key="size"><button data-value="%">%</button><button data-value="px">px</button></div>
       </div>
       <div class="presets" id="placement-presets"></div>
-      <pre id="placement-code"></pre>
       <p class="hint">x, y = the shape's centre (% of the element's width / height); size = the side of its square (% of the width). Numbers mean %, strings can be '40%' or '120px'. Sliders jump, presets animate (together with a morph).</p>
     </section>
 
@@ -385,10 +360,8 @@
     </section>
 
     <section class="panel">
-      <details>
-        <summary>Path data (0…1 units)</summary>
-        <pre id="clip-path-output"></pre>
-      </details>
+      <h2>Code</h2>
+      <pre id="clip-code"></pre>
     </section>
   </aside>
 </div>
