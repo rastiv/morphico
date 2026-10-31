@@ -36,6 +36,8 @@ export interface ClipChanges {
   roundness?: number;
   /** `false` (default) = the whole shape shows; an outline = only a band along its edge (not animated). */
   outline?: false | ClipOutline;
+  /** `true` = the other way round: the shape (or band) is a hole, the rest of the element shows (not animated). */
+  inverted?: boolean;
 }
 
 export interface ClipOptions extends ClipChanges, MorphOptions {
@@ -71,6 +73,8 @@ const GRID_CENTER = 12;
 const DEGREE = Math.PI / 180;
 /** Masks and their clip regions reach far past the element, so bands and turned shapes are never cut by them. */
 const FAR = 100000;
+/** In objectBoundingBox units (1 = the element's width / height): far around the element. */
+const INVERTED_SURROUNDING = 'M-1000 -1000H1001V1001H-1000Z';
 
 let clipCount = 0;
 
@@ -109,7 +113,7 @@ const checkedOutline = (outline: false | ClipOutline): false | ClipOutline => {
 export const clip = (element: HTMLElement | SVGElement, options: ClipOptions = {}): Clip => {
   const {
     set = clipShapes, state: initialState = 'circle', x = 50, y = 50, size, rotation = 0, roundness = 1,
-    outline = false, ...defaultMorphOptions
+    outline = false, inverted = false, ...defaultMorphOptions
   } = options;
   const checkedState = (shapeSet: IconSet, state: string): string => {
     if (!(state in shapeSet.strokes)) {
@@ -124,7 +128,7 @@ export const clip = (element: HTMLElement | SVGElement, options: ClipOptions = {
   /** Where the change goes (or what shows when nothing moves). */
   const target = {
     state: checkedState(set, initialState), set: resolveIconSet(set, roundness), roundness,
-    x, y, size, rotation, outline: checkedOutline(outline),
+    x, y, size, rotation, outline: checkedOutline(outline), inverted,
   };
   const pieceLength = pieceLengthOf(set);
   let frame: Frame | null = null; // null = resting at the target
@@ -147,8 +151,14 @@ export const clip = (element: HTMLElement | SVGElement, options: ClipOptions = {
     for (const helper of svg.querySelectorAll('.morphico-band-helper')) helper.remove();
     maskElement.replaceChildren();
     bandPaths = [];
+    clipShape.setAttribute('clip-rule', target.inverted ? 'evenodd' : 'nonzero');
     if (!target.outline) return;
     const { width, band = 'inside' } = target.outline;
+    // inverted: everything shows (white), the band is the hole (black)
+    const bandColor = target.inverted ? 'black' : 'white';
+    if (target.inverted) {
+      maskElement.append(createSvgElement('rect', { x: -FAR, y: -FAR, width: 2 * FAR, height: 2 * FAR, fill: 'white' }));
+    }
     const pixelPath = (attributes: Record<string, string | number>) => {
       const path = createSvgElement('path', attributes);
       bandPaths.push(path);
@@ -156,7 +166,7 @@ export const clip = (element: HTMLElement | SVGElement, options: ClipOptions = {
     };
     // inside = a line twice as wide, clipped to the shape; outside = a line twice as wide, the shape cut out of it
     const edgeLine = (lineWidth: number) =>
-      pixelPath({ fill: 'none', stroke: 'white', 'stroke-width': lineWidth, 'stroke-linejoin': 'miter' });
+      pixelPath({ fill: 'none', stroke: bandColor, 'stroke-width': lineWidth, 'stroke-linejoin': 'miter' });
     if (band === 'centre') {
       maskElement.append(edgeLine(width));
     } else if (band === 'inside') {
@@ -219,7 +229,9 @@ export const clip = (element: HTMLElement | SVGElement, options: ClipOptions = {
     } else {
       // objectBoundingBox: 0…1 of the element's width / height
       const boxUnits = pixels.map((value, index) => value / (index % 2 ? elementHeight : elementWidth));
-      clipShape.setAttribute('d', toPathData(boxUnits, pieceLength));
+      // inverted: a rectangle far around the element with the shape as a hole in it (clip-rule evenodd)
+      const surrounding = target.inverted ? INVERTED_SURROUNDING : '';
+      clipShape.setAttribute('d', surrounding + toPathData(boxUnits, pieceLength));
     }
   };
 
@@ -253,8 +265,9 @@ export const clip = (element: HTMLElement | SVGElement, options: ClipOptions = {
     if (changes.y !== undefined) target.y = changes.y;
     if (changes.size !== undefined) target.size = changes.size;
     if (changes.rotation !== undefined) target.rotation = changes.rotation;
-    if (changes.outline !== undefined) {
-      target.outline = checkedOutline(changes.outline);
+    if (changes.outline !== undefined || changes.inverted !== undefined) {
+      if (changes.outline !== undefined) target.outline = checkedOutline(changes.outline);
+      if (changes.inverted !== undefined) target.inverted = changes.inverted;
       buildBand();
       applyStyle();
     }

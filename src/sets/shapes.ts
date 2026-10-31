@@ -1,5 +1,5 @@
 // Shapes for clip(): closed outlines that cut out an element. From Lucide 1.61.0 (ISC, see LICENSE-lucide), imported
-// by `node tools/import-lucide.ts <name>`; tag without its dot. The states are the Lucide outlines made comparable for
+// by `node tools/import-lucide.ts <name>`; tag without its dot, club without its stem. The states are the Lucide outlines made comparable for
 // morphing: clockwise, starting where the outline crosses the vertical middle at the top, scaled evenly to fill the
 // 24×24 box and centred (computed on first use, not at import). Roundness 1 = Lucide's own corners … 0 = sharp.
 import { arc, cubic, ellipse, line, reversedStroke, strokePiece } from '../geometry.ts';
@@ -214,16 +214,6 @@ export const lucideShapeOutlines: Record<string, Stroke[]> = {
     line(2, 16, 2, 8),
     arc(4, 8, 2, 180, 270),
   ],
-  'rectangle-vertical': [
-    line(8, 2, 16, 2),
-    arc(16, 4, 2, -90, 0),
-    line(18, 4, 18, 20),
-    arc(16, 20, 2, 0, 90),
-    line(16, 22, 8, 22),
-    arc(8, 20, 2, 90, 180),
-    line(6, 20, 6, 4),
-    arc(8, 4, 2, 180, 270),
-  ],
   'message-circle': [
     arc(1.1328, 17.079, 2, -21.6245, 12.4142),
     line(3.086, 17.509, 2.021, 20.799),
@@ -243,16 +233,6 @@ export const lucideShapeOutlines: Record<string, Stroke[]> = {
     line(4, 3, 20, 3),
     arc(20, 5, 2, -90, 0),
     line(22, 5, 22, 17),
-  ],
-  diamond: [
-    arc(4.4033, 12.005, 2.41, -134.9707, -225.0293),
-    line(2.7, 13.71, 10.29, 21.3),
-    arc(11.995, 19.5967, 2.41, 135.0293, 44.9707),
-    line(13.7, 21.3, 21.29, 13.71),
-    arc(19.5867, 12.005, 2.41, 45.0293, -45.0293),
-    line(21.29, 10.3, 13.7, 2.71),
-    arc(11.995, 4.4133, 2.41, -44.9707, -135.0293),
-    line(10.29, 2.71, 2.7, 10.3),
   ],
   cloud: [
     line(17.5, 19, 9, 19),
@@ -285,6 +265,13 @@ export const lucideShapeOutlines: Record<string, Stroke[]> = {
     line(8.61, 4.389, 10.293, 2.707),
     arc(12, 4.4139, 2.414, -135.0015, -44.9985),
     line(13.707, 2.707, 15.39, 4.39),
+  ],
+  // without its stem line (Lucide's second piece)
+  club: [
+    arc(12, 7.51, 5.5, 16.2602, -196.2602),
+    arc(7.5026, 14.494, 5.5, -98.1803, -324.8563),
+    arc(16.5052, 14.5052, 5.5, 144.9978, -81.9018),
+    line(17.28, 9.06, 17.28, 9.05),
   ],
 };
 

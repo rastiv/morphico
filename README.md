@@ -91,12 +91,14 @@ photo.to('shield', { rotation: 360, x: 30, size: '120px' }); // morph + turn + m
 photo.to({ x: 70, y: '150px' });                          // move only, the shape stays
 photo.set({ rotation: 15 });                              // jump, no animation (e.g. while dragging a slider)
 photo.set({ outline: { width: 16 } });                    // only a 16 px band along the edge shows
+photo.set({ inverted: true });                            // the other way round: the shape is a hole
 photo.destroy();                                          // the element is whole again
 ```
 
 Shapes (based on [Lucide](https://lucide.dev)): `circle`, `ellipse`, `heart`, `sparkle`, `astroid`, `bookmark`,
 `shield`, `moon`, `tag`, `square`, `badge`, `triangle`, `droplet`, `pentagon`, `hexagon`, `octagon`, `squircle`,
-`star`, `rectangle-horizontal`, `rectangle-vertical`, `message-circle`, `message-square`, `diamond`, `cloud`, `puzzle`.
+`star`, `rectangle-horizontal`, `message-circle`, `message-square`, `cloud`, `puzzle`, `club`. A diamond is the `square`
+turned 45°, a portrait rectangle `rectangle-horizontal` turned 90° (`rotation`).
 
 | Option | Default | |
 | --- | --- | --- |
@@ -106,9 +108,10 @@ Shapes (based on [Lucide](https://lucide.dev)): `circle`, `ellipse`, `heart`, `s
 | `rotation` | `0` | Degrees, clockwise, **absolute**: `rotation: 360` ends one full turn from 0. The shape turns rigidly, also in a wide or tall element |
 | `roundness` | `1` | Corners: `0` = sharp … `1` = the shape's own (the maximum) |
 | `outline` | `false` | `{ width, band }`: only a band of `width` px along the edge shows; `band`: `'inside'` (default), `'centre'` or `'outside'` the edge. Not animated |
+| `inverted` | `false` | `true`: the other way round — the shape (or band) is a hole, the rest of the element shows. Not animated |
 | `duration`, `easing` | `400`, `'easeInOutCubic'` | As for icons; also per `to()` call |
 
-Everything except `outline` animates together in `to()`. How it works: a filled shape uses CSS `clip-path: url(#…)`,
+Everything except `outline` and `inverted` animates together in `to()`. How it works: a filled shape uses CSS `clip-path: url(#…)`,
 an outlined one `mask: url(#…)` (clip-path has no line width); the `<clipPath>` / `<mask>` sit in a small hidden
 `<svg>` that `clip()` adds to the page. It follows the element's size (`ResizeObserver`). Overflow beyond the element is
 cut off, as with any clip-path.

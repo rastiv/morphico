@@ -3,6 +3,13 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 patch = nicer transitions and fixes, minor = new icon sets or options, major = API changes or a changed resting look of an icon.
 
+## Unreleased
+
+- `clip()` shapes: new `club` (♣, without its stem). Removed `rectangle-vertical` and `diamond`: use
+  `rectangle-horizontal` with `rotation: 90` and `square` with `rotation: 45`.
+- `clip()`: new option `inverted` — the shape (or the outlined band) becomes a hole and the rest of the element
+  shows.
+
 ## 0.3.0
 
 - New `clip(element, options)`: cuts any element out by a morphing shape (25 shapes based on Lucide: circle, heart,

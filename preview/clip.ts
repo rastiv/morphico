@@ -67,6 +67,7 @@ const bandWidthInput = byId<HTMLInputElement>('band-width');
 const bandWidthOutput = byId<HTMLOutputElement>('band-width-output');
 const roundnessInput = byId<HTMLInputElement>('clip-roundness');
 const roundnessOutput = byId<HTMLOutputElement>('clip-roundness-output');
+const invertedCheckbox = byId<HTMLInputElement>('clip-inverted');
 const playButton = byId<HTMLButtonElement>('play-sequence');
 const codeOutput = byId<HTMLPreElement>('clip-code');
 
@@ -81,8 +82,8 @@ const elementSize = (): { width: number; height: number } => {
 const fittingSize = (): string => `${Math.round(Math.min(elementSize().width, elementSize().height))}px`;
 
 /** What the clips show (or move to), as clip() options — also what the controls and the Code panel show. */
-const shown: { state: string; x: Length; y: Length; size: Length; rotation: number; roundness: number; outline: false | ClipOutline } = {
-  state: FIRST_SHAPE, x: 50, y: 50, size: fittingSize(), rotation: 0, roundness: 1, outline: false,
+const shown: { state: string; x: Length; y: Length; size: Length; rotation: number; roundness: number; outline: false | ClipOutline; inverted: boolean } = {
+  state: FIRST_SHAPE, x: 50, y: 50, size: fittingSize(), rotation: 0, roundness: 1, outline: false, inverted: false,
 };
 
 const clips: Clip[] = [imageStage, cardStage].map((element) => clip(element, shown));
@@ -264,6 +265,7 @@ for (const button of bandButtons.querySelectorAll<HTMLButtonElement>('button')) 
 }
 bandWidthInput.addEventListener('input', () => jumpTo(outlineChange()));
 roundnessInput.addEventListener('input', () => jumpTo({ roundness: Number(roundnessInput.value) }));
+invertedCheckbox.addEventListener('change', () => jumpTo({ inverted: invertedCheckbox.checked }));
 
 // the tab starts hidden (size 0): once the elements have a size, fit the shape and show the controls
 let fittedYet = false;
