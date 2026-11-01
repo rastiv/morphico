@@ -54,4 +54,4 @@ const buildCheckboxIcons = (radius: number): IconSet => {
   };
 };
 
-export const checkboxIcons: IconSet = buildCheckboxIcons(LUCIDE_RADIUS);
+export const iconsCheckbox: IconSet = buildCheckboxIcons(LUCIDE_RADIUS);

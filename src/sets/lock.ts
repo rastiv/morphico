@@ -33,7 +33,7 @@ const shackle: PieceSet = {
   },
 };
 
-export const lockIcons: IconSet = {
+export const iconsLock: IconSet = {
   segmentCount: 12,
   strokeWidth: LUCIDE_STROKE_WIDTH,
   lineCap: 'round',

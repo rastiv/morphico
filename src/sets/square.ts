@@ -38,7 +38,7 @@ const SIX_POINTS: Point[] = [[15, 2], [2, 2], [2, 26], [19, 26], [19, 12], [2, 1
 const SIX_RADII = [0, SIX_RADIUS, SIX_RADIUS, SIX_RADIUS, SIX_RADIUS, 0];
 
 // '-' '/' '.' ',' ':' are added by withTextCharacters (characters.ts)
-export const squareDigits: IconSet = withTextCharacters({
+export const digitsSquare: IconSet = withTextCharacters({
   segmentCount: 20,
   strokeWidth: STROKE_WIDTH,
   lineCap: 'round',

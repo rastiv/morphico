@@ -9,8 +9,9 @@ import {
   defaultShapes, drawnPieces, interpolate, pieceLengthOf, rotateAroundCenter, scaleAroundCenter, shapeForPair, splitPieces,
   toPathData, toSegments, withDrawnPieces,
 } from '../src/geometry.ts';
-import { iconSets, resolveIconSet } from '../src/iconSets.ts';
-import type { IconSetName } from '../src/iconSets.ts';
+import { iconSets } from '../src/all.ts';
+import type { IconSetName } from '../src/all.ts';
+import { resolveIconSet } from '../src/roundness.ts';
 import type { EasingName } from '../src/morph.ts';
 import type { StyleOptions } from '../src/svg.ts';
 import { text } from '../src/text.ts';
@@ -268,7 +269,7 @@ function buildStateButtons(): void {
 function loadIconSet(keepState: boolean): void {
   stopRunningAnimation();
   const baseSet = iconSets[iconSetName];
-  iconSet = style.roundness !== undefined && baseSet.withRoundness ? resolveIconSet(iconSetName, style.roundness) : baseSet;
+  iconSet = style.roundness !== undefined && baseSet.withRoundness ? resolveIconSet(baseSet, style.roundness) : baseSet;
   try {
     shapes = defaultShapes(iconSet);
   } catch (error) {
@@ -410,9 +411,8 @@ function buildTextLine(): void {
   textLineControl?.destroy();
   textLineControl = null;
   if (!iconSet.textLayout || tab !== 'digits') return;
-  textLineControl = text(textLine, {
+  textLineControl = text(textLine, textInput.value, {
     set: iconSet,
-    value: textInput.value,
     size: `${textSizeInput.value}px`,
     cellWidth: Number(cellWidthInput.value),
     spacing: Number(spacingInput.value),
@@ -427,7 +427,7 @@ function buildTextLine(): void {
 }
 
 function updateTextLine(value: string): void {
-  textLineControl?.set(value, { duration: Number(durationInput.value), easing: easingSelect.value as EasingName });
+  textLineControl?.to(value, { duration: Number(durationInput.value), easing: easingSelect.value as EasingName });
 }
 
 const twoDigits = (value: number) => String(value).padStart(2, '0');

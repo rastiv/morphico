@@ -30,7 +30,7 @@ const second: PieceSet = {
   pairLayouts: {},
 };
 
-export const toggleIcons: IconSet = {
+export const iconsToggle: IconSet = {
   segmentCount: 1,
   strokeWidth: LUCIDE_STROKE_WIDTH,
   lineCap: 'round',

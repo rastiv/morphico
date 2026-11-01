@@ -13,7 +13,7 @@ import { withTextCharacters } from './characters.ts';
 import type { IconSet } from '../types.ts';
 
 // '-' '/' '.' ',' ':' are added by withTextCharacters (characters.ts)
-export const handwrittenDigits: IconSet = withTextCharacters({
+export const digitsHandwritten: IconSet = withTextCharacters({
   segmentCount: 16,
   strokeWidth: 1.04,
   lineCap: 'round',

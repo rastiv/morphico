@@ -28,9 +28,11 @@ const codeOutput = byId<HTMLPreElement>('face-code');
 // ---- the face ----
 
 let robot: Face;
+/** The expression shown: face() doesn't report it, the page keeps track (as an app would). */
+let expression: FaceExpression = FIRST_EXPRESSION;
 
 const createRobot = (state: FaceExpression): void => {
-  robot = face(faceTarget, { state, pupilColor: pupilsColorInput.value, blink: autoBlinkCheckbox.checked });
+  robot = face(faceTarget, state, { pupilColor: pupilsColorInput.value, blink: autoBlinkCheckbox.checked });
 };
 
 const morphOptions = () => ({ duration: Number(durationInput.value), easing: easingSelect.value as EasingName });
@@ -38,18 +40,18 @@ const morphOptions = () => ({ duration: Number(durationInput.value), easing: eas
 const showCode = (): void => {
   const { duration, easing } = morphOptions();
   codeOutput.textContent = [
-    `const robot = face(element, {`,
-    `  state: '${FIRST_EXPRESSION}',`,
+    `const robot = face(element, '${FIRST_EXPRESSION}', {`,
     `  pupilColor: '${pupilsColorInput.value}',`,
     `  blink: ${autoBlinkCheckbox.checked},`,
     `});`,
     `// brows, eyes and mouth: the element's CSS color (${featuresColorInput.value})`,
-    `robot.to('${robot.state}', { duration: ${duration}, easing: '${easing}' });`,
+    `robot.to('${expression}', { duration: ${duration}, easing: '${easing}' });`,
     `robot.blink();`,
   ].join('\n');
 };
 
 const morphTo = (state: FaceExpression) => {
+  expression = state;
   const morph = robot.to(state, morphOptions());
   updateButtons();
   showCode();
@@ -58,9 +60,8 @@ const morphTo = (state: FaceExpression) => {
 
 /** Options face() takes only when created: rebuild it showing the same expression. */
 const rebuildRobot = (): void => {
-  const state = robot.state;
   robot.destroy();
-  createRobot(state);
+  createRobot(expression);
   showCode();
 };
 
@@ -89,7 +90,7 @@ const expressionPicture = (name: FaceExpression): SVGSVGElement => {
 
 function updateButtons(): void {
   for (const button of expressionButtons.querySelectorAll<HTMLButtonElement>('button')) {
-    button.classList.toggle('active', button.dataset.expression === robot.state);
+    button.classList.toggle('active', button.dataset.expression === expression);
   }
 }
 
@@ -111,7 +112,7 @@ playButton.onclick = async () => {
   if (playing) return;
   playing = true;
   playButton.disabled = true;
-  const current = faceExpressionNames.indexOf(robot.state);
+  const current = faceExpressionNames.indexOf(expression);
   const order = [...faceExpressionNames.slice(current + 1), ...faceExpressionNames.slice(0, current + 1)];
   for (const name of order) {
     if (faceView.hidden) break;

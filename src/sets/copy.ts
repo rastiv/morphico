@@ -46,7 +46,7 @@ const backPage: PieceSet = {
   pairLayouts: { copied: { copy: { draw: 0.5 } } },
 };
 
-export const copyIcons: IconSet = {
+export const iconsCopy: IconSet = {
   segmentCount: 12,
   strokeWidth: LUCIDE_STROKE_WIDTH,
   lineCap: 'round',

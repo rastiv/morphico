@@ -61,7 +61,7 @@ const FOLDER_LIKE_OPEN = [
   tabTop, tabArc2, tabSlope, tabArc1, topEdge, topRight, lucideLine(22, 8, 22, 10),
 ];
 
-export const folderIcons: IconSet = {
+export const iconsFolder: IconSet = {
   segmentCount: 20,
   strokeWidth: LUCIDE_STROKE_WIDTH,
   lineCap: 'round',

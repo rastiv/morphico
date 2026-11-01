@@ -3,6 +3,32 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 patch = nicer transitions and fixes, minor = new icon sets or options, major = API changes or a changed resting look of an icon.
 
+## 0.5.0
+
+- **Breaking: sets are imported, not named.** Every set is its own import, and `set` takes the set object:
+  ```ts
+  // before                                  // now
+  icon(el, { set: 'weather', state: 'sunny' })  import { iconsWeather } from 'morphico/sets/weather';
+                                             icon(el, 'sunny', { set: iconsWeather })
+  ```
+  Names: `morphico/sets/<name>` exports `digits<Name>` (round, square, condensed, slim, handwritten) or
+  `icons<Name>` (media, menu, weather …). `set` is now required for `icon()` and `text()` (it was `'round'`).
+  The `iconSets` export (sets by name) moved to `morphico/all`; the classic script (`morphico.js`) keeps everything
+  in one file, with `morphico.iconSets`. `IconSetName` moved there too.
+- The package now ships ES modules file by file (`dist/esm/`), so bundlers keep only what a page uses: `icon()`
+  with one set is about 13–21 KB gzipped instead of 63 KB. `dist/morphico.mjs` is gone (use `morphico` /
+  `dist/esm/index.js`).
+- **Breaking: every layer is created as `layer(element, init, options)`** — what it shows first is the second
+  argument (was the option `state`, or `value` for `text()`), the settings come third, and every change is `to()`:
+  ```ts
+  icon(el, '4', { set: digitsRound })            text(el, '04:59', { set: digitsRound })
+  clip(el, 'star', { x: 50, size: '80%' })       face(el, 'normal', { duration: 300 })
+  ```
+  `text().set(value)` is now `text().to(value)` (type `SetOptions` → `TextChangeOptions`); `clip().set(changes)` is
+  gone — `clip().to({ …changes, duration: 0 })` jumps the same way. The `state` properties of `icon()`, `clip()` and
+  `face()` and `text().value` are gone: the page knows what it asked for (the promise of `to()` still resolves with it).
+  Passing options second throws an error that explains the new order.
+
 ## 0.4.0
 
 - New `face(element, options)`: a face of 7 soft pieces (brows, eyes, pupils, mouth) that morphs between 32

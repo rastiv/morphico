@@ -63,7 +63,7 @@ const slash: PieceSet = {
   pairLayouts: { on: { off: { draw: true } } },
 };
 
-export const micIcons: IconSet = {
+export const iconsMic: IconSet = {
   segmentCount: 12,
   strokeWidth: LUCIDE_STROKE_WIDTH,
   lineCap: 'round',

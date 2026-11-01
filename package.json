@@ -1,6 +1,6 @@
 {
   "name": "morphico",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Morphing line-art icons: smooth SVG path transitions between digits and other states. No dependencies.",
   "license": "MIT AND ISC",
   "author": "Raycho Ivanov",
@@ -16,10 +16,102 @@
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "default": "./dist/morphico.mjs"
+      "default": "./dist/esm/index.js"
+    },
+    "./all": {
+      "types": "./dist/types/all.d.ts",
+      "default": "./dist/esm/all.js"
+    },
+    "./sets/round": {
+      "types": "./dist/types/sets/round.d.ts",
+      "default": "./dist/esm/sets/round.js"
+    },
+    "./sets/square": {
+      "types": "./dist/types/sets/square.d.ts",
+      "default": "./dist/esm/sets/square.js"
+    },
+    "./sets/condensed": {
+      "types": "./dist/types/sets/condensed.d.ts",
+      "default": "./dist/esm/sets/condensed.js"
+    },
+    "./sets/slim": {
+      "types": "./dist/types/sets/slim.d.ts",
+      "default": "./dist/esm/sets/slim.js"
+    },
+    "./sets/handwritten": {
+      "types": "./dist/types/sets/handwritten.d.ts",
+      "default": "./dist/esm/sets/handwritten.js"
+    },
+    "./sets/media": {
+      "types": "./dist/types/sets/media.d.ts",
+      "default": "./dist/esm/sets/media.js"
+    },
+    "./sets/menu": {
+      "types": "./dist/types/sets/menu.d.ts",
+      "default": "./dist/esm/sets/menu.js"
+    },
+    "./sets/checkbox": {
+      "types": "./dist/types/sets/checkbox.d.ts",
+      "default": "./dist/esm/sets/checkbox.js"
+    },
+    "./sets/radio": {
+      "types": "./dist/types/sets/radio.d.ts",
+      "default": "./dist/esm/sets/radio.js"
+    },
+    "./sets/folder": {
+      "types": "./dist/types/sets/folder.d.ts",
+      "default": "./dist/esm/sets/folder.js"
+    },
+    "./sets/theme": {
+      "types": "./dist/types/sets/theme.d.ts",
+      "default": "./dist/esm/sets/theme.js"
+    },
+    "./sets/weather": {
+      "types": "./dist/types/sets/weather.d.ts",
+      "default": "./dist/esm/sets/weather.js"
+    },
+    "./sets/eye": {
+      "types": "./dist/types/sets/eye.d.ts",
+      "default": "./dist/esm/sets/eye.js"
+    },
+    "./sets/volume": {
+      "types": "./dist/types/sets/volume.d.ts",
+      "default": "./dist/esm/sets/volume.js"
+    },
+    "./sets/toggle": {
+      "types": "./dist/types/sets/toggle.d.ts",
+      "default": "./dist/esm/sets/toggle.js"
+    },
+    "./sets/lock": {
+      "types": "./dist/types/sets/lock.d.ts",
+      "default": "./dist/esm/sets/lock.js"
+    },
+    "./sets/bell": {
+      "types": "./dist/types/sets/bell.d.ts",
+      "default": "./dist/esm/sets/bell.js"
+    },
+    "./sets/mic": {
+      "types": "./dist/types/sets/mic.d.ts",
+      "default": "./dist/esm/sets/mic.js"
+    },
+    "./sets/chevron": {
+      "types": "./dist/types/sets/chevron.d.ts",
+      "default": "./dist/esm/sets/chevron.js"
+    },
+    "./sets/copy": {
+      "types": "./dist/types/sets/copy.d.ts",
+      "default": "./dist/esm/sets/copy.js"
+    },
+    "./sets/wifi": {
+      "types": "./dist/types/sets/wifi.d.ts",
+      "default": "./dist/esm/sets/wifi.js"
+    },
+    "./sets/battery": {
+      "types": "./dist/types/sets/battery.d.ts",
+      "default": "./dist/esm/sets/battery.js"
     }
   },
-  "module": "./dist/morphico.mjs",
+  "module": "./dist/esm/index.js",
   "types": "./dist/types/index.d.ts",
   "jsdelivr": "./dist/morphico.js",
   "unpkg": "./dist/morphico.js",

@@ -22,7 +22,7 @@ const turnBetween = (fromIndex: number, toIndex: number) => {
   return quarterTurns === 3 ? -90 : quarterTurns * 90;
 };
 
-export const chevronIcons: IconSet = {
+export const iconsChevron: IconSet = {
   segmentCount: 2,
   strokeWidth: LUCIDE_STROKE_WIDTH,
   lineCap: 'round',

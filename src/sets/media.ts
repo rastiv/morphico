@@ -70,4 +70,4 @@ const buildMediaIcons = (radii: typeof LUCIDE_RADII): IconSet => {
   };
 };
 
-export const mediaIcons: IconSet = buildMediaIcons(LUCIDE_RADII);
+export const iconsMedia: IconSet = buildMediaIcons(LUCIDE_RADII);

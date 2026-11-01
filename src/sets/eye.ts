@@ -68,7 +68,7 @@ const slash: PieceSet = {
   pairLayouts: { visible: { hidden: { draw: true } } },
 };
 
-export const eyeIcons: IconSet = {
+export const iconsEye: IconSet = {
   segmentCount: 12,
   strokeWidth: LUCIDE_STROKE_WIDTH,
   lineCap: 'round',

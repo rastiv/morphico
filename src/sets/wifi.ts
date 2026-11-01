@@ -24,7 +24,7 @@ const arcPiece = (arcIndex: number): PieceSet => ({
   pairLayouts: {},
 });
 
-export const wifiIcons: IconSet = {
+export const iconsWifi: IconSet = {
   segmentCount: 4,
   strokeWidth: LUCIDE_STROKE_WIDTH,
   lineCap: 'round',

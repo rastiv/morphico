@@ -39,7 +39,7 @@ const SIX_POINTS: Point[] = [[47, 94 - HOOK_END_Y], [47, 3], [3, 3], [3, 91], [4
 const SIX_RADII = [0, OUTER_RADIUS, OUTER_RADIUS, OUTER_RADIUS, OUTER_RADIUS, MIDDLE_RADIUS, 0];
 
 // '-' '/' '.' ',' ':' are added by withTextCharacters (characters.ts)
-export const condensedDigits: IconSet = withTextCharacters({
+export const digitsCondensed: IconSet = withTextCharacters({
   segmentCount: 20,
   strokeWidth: 6 / PIXELS_PER_UNIT,
   lineCap: 'round',

@@ -30,7 +30,7 @@ const openPart = Array.from({ length: 11 }, (_, index) => +((index / 10) * OPEN_
 const CIRCLE_FOR_OPEN_CIRCLE = { breakpoints: [...openPart, +((1 + OPEN_SHARE) / 2).toFixed(4), 1], startSegment: 11 };
 const OPEN_CIRCLE_FOR_CIRCLE = { breakpoints: [0, ...Array.from({ length: 11 }, (_, index) => index / 10), 1] };
 
-export const radioIcons: IconSet = {
+export const iconsRadio: IconSet = {
   segmentCount: 12,
   strokeWidth: LUCIDE_STROKE_WIDTH,
   lineCap: 'round',

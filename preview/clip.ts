@@ -86,7 +86,10 @@ const shown: { state: string; x: Length; y: Length; size: Length; rotation: numb
   state: FIRST_SHAPE, x: 50, y: 50, size: fittingSize(), rotation: 0, roundness: 1, outline: false, inverted: false,
 };
 
-const clips: Clip[] = [imageStage, cardStage].map((element) => clip(element, shown));
+const clips: Clip[] = [imageStage, cardStage].map((element) => {
+  const { state, ...changes } = shown;
+  return clip(element, state, changes);
+});
 let sequenceRun = 0;
 
 const unitOf = (length: Length): Unit => (typeof length === 'string' && length.trim().endsWith('px') ? 'px' : '%');
@@ -129,7 +132,7 @@ const showControls = (): void => {
   roundnessOutput.textContent = shown.roundness === 1 ? 'own' : shown.roundness === 0 ? 'sharp' : shown.roundness.toFixed(2);
   bandWidthOutput.textContent = `${bandWidthInput.value}px`;
   const { state, ...changes } = shown;
-  codeOutput.textContent = `clip(element, ${asCode({ state, ...changes })});`;
+  codeOutput.textContent = `clip(element, '${state}', ${asCode(changes)});`;
 };
 
 const motion = () => ({ duration: Number(durationInput.value), easing: easingSelect.value as EasingName });
@@ -147,10 +150,11 @@ const animateTo = async (changes: ClipChanges & { state?: string }): Promise<voi
   }
 };
 
-/** Jumps every clip to the shown options (sliders). */
+/** Jumps every clip to the shown options (sliders): to() with duration 0. */
 const jumpTo = (changes: ClipChanges & { state?: string }): void => {
   Object.assign(shown, changes);
-  for (const oneClip of clips) oneClip.set(changes);
+  const { state, ...rest } = changes;
+  for (const oneClip of clips) void (state ? oneClip.to(state, { ...rest, duration: 0 }) : oneClip.to({ ...rest, duration: 0 }));
   showControls();
 };
 

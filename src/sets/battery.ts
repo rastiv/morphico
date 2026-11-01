@@ -46,7 +46,7 @@ const fixedPiece = (strokes: typeof BODY): PieceSet => ({
   pairLayouts: {},
 });
 
-export const batteryIcons: IconSet = {
+export const iconsBattery: IconSet = {
   segmentCount: 12,
   strokeWidth: LUCIDE_STROKE_WIDTH,
   lineCap: 'round',

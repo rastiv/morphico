@@ -7,11 +7,10 @@ import { DEFAULT_DURATION, prefersReducedMotion } from './morph.ts';
 import type { MorphOptions, MorphResult } from './morph.ts';
 import { blinked, faceExpressionNames, faceExpressionPieces, facePaths, interpolateFace } from './sets/faces.ts';
 import type { FaceExpression, FacePieces } from './sets/faces.ts';
+import { checkedInit } from './roundness.ts';
 import { createSvgElement } from './svg.ts';
 
 export interface FaceOptions extends MorphOptions {
-  /** The expression shown first (default `'normal'`). */
-  state?: FaceExpression;
   /** Color of the pupils (default `'white'`). Brows, eyes and mouth take the CSS `color`. */
   pupilColor?: string;
   /** Blink by itself every few seconds (default `true`). Off when the user prefers reduced motion. */
@@ -26,8 +25,6 @@ export interface FaceChangeOptions extends MorphOptions {
 }
 
 export interface Face {
-  /** The expression shown, or being morphed to. */
-  readonly state: FaceExpression;
   /**
    * Morphs to another expression. The promise resolves when the morph ends; an interrupted morph resolves with
    * `interrupted: true`. Without animation when the user prefers reduced motion.
@@ -57,11 +54,11 @@ const checkedExpression = (state: string): FaceExpression => {
 
 const resolveEasing = (easing: MorphOptions['easing']): Easing => (typeof easing === 'function' ? easing : easings[easing ?? 'easeInOutCubic']);
 
-/** Adds a morphing face (an <svg>) to `element`. */
-export const face = (element: Element, options: FaceOptions = {}): Face => {
-  const { state: firstState = 'normal', pupilColor = 'white', blink: blinksByItself = true, size = '100%', ...defaultMorphOptions } = options;
+/** Adds a morphing face (an <svg>) to `element`, showing the expression `init` first. */
+export const face = (element: Element, init: FaceExpression, options: FaceOptions = {}): Face => {
+  const { pupilColor = 'white', blink: blinksByItself = true, size = '100%', ...defaultMorphOptions } = options;
   const expressions = faceExpressionPieces();
-  let state = checkedExpression(firstState);
+  let state = checkedExpression(checkedInit(init, 'face'));
   let shownPieces: FacePieces = expressions[state];
   let openness = 1;
 
@@ -174,7 +171,6 @@ export const face = (element: Element, options: FaceOptions = {}): Face => {
   if (blinksByItself && !prefersReducedMotion()) scheduleAutoBlink();
 
   return {
-    get state() { return state; },
     to(nextState, { onEnd, ...morphOptions } = {}) {
       const result = morphTo(checkedExpression(nextState), { ...defaultMorphOptions, ...morphOptions });
       if (onEnd) result.then(onEnd);

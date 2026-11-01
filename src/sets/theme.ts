@@ -59,7 +59,7 @@ const rayPiece = (ray: Stroke): PieceSet => ({
   pairLayouts: { dark: { light: { draw: 0.6 } } },
 });
 
-export const themeIcons: IconSet = {
+export const iconsTheme: IconSet = {
   segmentCount: 12,
   strokeWidth: LUCIDE_STROKE_WIDTH,
   lineCap: 'round',

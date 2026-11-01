@@ -48,7 +48,7 @@ const bigWave: PieceSet = {
   pairLayouts: {},
 };
 
-export const volumeIcons: IconSet = {
+export const iconsVolume: IconSet = {
   segmentCount: 16,
   strokeWidth: LUCIDE_STROKE_WIDTH,
   lineCap: 'round',

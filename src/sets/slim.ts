@@ -45,7 +45,7 @@ const SIX: Stroke[] = [
 ];
 
 // '-' '/' '.' ',' ':' are added by withTextCharacters (characters.ts)
-export const slimDigits: IconSet = withTextCharacters({
+export const digitsSlim: IconSet = withTextCharacters({
   segmentCount: 16,
   strokeWidth: 6 / 5.5,
   lineCap: 'round',

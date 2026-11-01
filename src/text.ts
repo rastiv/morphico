@@ -1,9 +1,8 @@
 // Layer 2: a line of characters (clock, counter, date) in narrow cells; changed digits morph.
 // Every character reuses the 24×24 icon drawing; only the viewBox is narrowed to its cell.
-import { resolveIconSet } from './iconSets.ts';
-import type { IconSetName } from './iconSets.ts';
 import { createMorphingPath, hasState } from './morph.ts';
 import type { MorphingPath, MorphOptions } from './morph.ts';
+import { checkedIconSet, checkedInit } from './roundness.ts';
 import { createIconSvg, createStrokedElement } from './svg.ts';
 import type { StyleOptions } from './svg.ts';
 import type { IconSet } from './types.ts';
@@ -16,10 +15,8 @@ const CELL_TOP = 3;
 const CELL_HEIGHT = 18;
 
 export interface TextOptions extends MorphOptions, StyleOptions {
-  /** A built-in set by name (default `'round'`) or a set object. */
-  set?: IconSetName | IconSet;
-  /** The text shown first (default: empty). */
-  value?: string;
+  /** A digit set, e.g. `digitsRound` from `'morphico/sets/round'`. */
+  set: IconSet;
   /** CSS height of the line (default `'1em'`: it follows the font size). */
   size?: string;
   /** Width of a digit cell in grid units, where a digit is 16 high (default: the set's own). */
@@ -31,25 +28,23 @@ export interface TextOptions extends MorphOptions, StyleOptions {
 export interface TextResult {
   /** The text the change was heading to. */
   value: string;
-  /** `true` when a newer `set()` (or `destroy()`) took over before every digit finished. */
+  /** `true` when a newer `to()` (or `destroy()`) took over before every digit finished. */
   interrupted: boolean;
 }
 
-export interface SetOptions extends MorphOptions {
+export interface TextChangeOptions extends MorphOptions {
   /** Called when every changed digit has finished, with the same result the promise resolves to. */
   onEnd?: (result: TextResult) => void;
 }
 
 export interface Text {
-  /** The text shown, or being morphed to (after unsupported characters were removed). */
-  readonly value: string;
   /**
-   * Shows `value`. Unsupported characters are removed first. If the length and every cell's width stay the same,
+   * Morphs to `value`. Unsupported characters are removed first. If the length and every cell's width stay the same,
    * the changed characters morph; otherwise the line is rebuilt without animation. Cells: digits, space and `-` are
    * one width, `:` `.` `,` half of it, `/` 0.7 of it — so `5` ↔ `-` or `.` ↔ `,` morph, `5` ↔ `:` rebuilds.
    * Pad with spaces (e.g. `String(count).padStart(3, ' ')`) to keep counters morphing.
    */
-  set(value: string, options?: SetOptions): Promise<TextResult>;
+  to(value: string, options?: TextChangeOptions): Promise<TextResult>;
   /** Stops all morphs and removes the line from the page. */
   destroy(): void;
 }
@@ -63,13 +58,14 @@ interface Cell {
 
 const formatNumber = (value: number): string => String(+value.toFixed(4));
 
-/** Adds a line of morphing characters (a <span> of <svg> cells) to `element`. */
-export const text = (element: Element, options: TextOptions = {}): Text => {
+/** Adds a line of morphing characters (a <span> of <svg> cells) to `element`, showing `init` first. */
+export const text = (element: Element, init: string, options: TextOptions): Text => {
+  const firstValue = checkedInit(init, 'text');
   const {
-    set, value: initialValue = '', size = '1em', cellWidth, spacing, strokeWidth, lineCap, lineJoin, fill, ...defaultMorphOptions
+    set, size = '1em', cellWidth, spacing, strokeWidth, lineCap, lineJoin, fill, ...defaultMorphOptions
   } = options;
   const style: StyleOptions = { strokeWidth, lineCap, lineJoin, fill };
-  const iconSet = resolveIconSet(set);
+  const iconSet = checkedIconSet(set, 'text');
   const { textLayout } = iconSet;
   if (!textLayout) throw new Error('morphico: text() needs a digit set (this set has no text layout)');
   const digitCellWidth = cellWidth ?? textLayout.cellWidth;
@@ -111,7 +107,7 @@ export const text = (element: Element, options: TextOptions = {}): Text => {
     line.replaceChildren(...cells.map((cell) => cell.svg));
   };
 
-  const show = (nextValue: string, { onEnd, ...morphOptions }: SetOptions = {}): Promise<TextResult> => {
+  const show = (nextValue: string, { onEnd, ...morphOptions }: TextChangeOptions = {}): Promise<TextResult> => {
     value = [...nextValue.replace(UNSUPPORTED_CHARACTERS, '')].filter((character) => hasState(iconSet, character)).join('');
     line.setAttribute('aria-label', value.trim());
     const characters = [...value];
@@ -132,11 +128,10 @@ export const text = (element: Element, options: TextOptions = {}): Text => {
     return change;
   };
 
-  show(initialValue);
+  show(firstValue);
 
   return {
-    get value() { return value; },
-    set: show,
+    to: show,
     destroy() {
       for (const cell of cells) cell.morphingPath.stop();
       line.remove();

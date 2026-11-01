@@ -4,7 +4,7 @@
 // (clip-path ignores line width). The <clipPath> / <mask> live in one hidden <svg> per clip.
 import { animate, easings } from './engine.ts';
 import { interpolate, pieceLengthOf, shapeForPair, toPathData } from './geometry.ts';
-import { resolveIconSet } from './iconSets.ts';
+import { checkedInit, resolveIconSet } from './roundness.ts';
 import { clampToUnit, DEFAULT_DURATION, prefersReducedMotion, shapesOf } from './morph.ts';
 import type { MorphOptions, MorphResult } from './morph.ts';
 import { clipShapes } from './sets/shapes.ts';
@@ -43,8 +43,6 @@ export interface ClipChanges {
 export interface ClipOptions extends ClipChanges, MorphOptions {
   /** The shape set (default: the built-in shapes, based on Lucide). */
   set?: IconSet;
-  /** The shape shown first (default `'circle'`). */
-  state?: string;
 }
 
 export interface ClipChangeOptions extends ClipChanges, MorphOptions {
@@ -53,17 +51,14 @@ export interface ClipChangeOptions extends ClipChanges, MorphOptions {
 }
 
 export interface Clip {
-  /** The shape shown, or being morphed to. */
-  readonly state: string;
   /**
    * Morphs to the shape `state` and animates the given changes along (move, resize, turn, roundness), or — called with
    * only an object — animates those changes and keeps the shape. The promise resolves when it ends; an interrupted
-   * change resolves with `interrupted: true`. Without animation when the user prefers reduced motion.
+   * change resolves with `interrupted: true`. Without animation when the user prefers reduced motion; `duration: 0`
+   * jumps (e.g. while a slider is dragged).
    */
   to(state: string, options?: ClipChangeOptions): Promise<MorphResult>;
   to(changes: ClipChangeOptions): Promise<MorphResult>;
-  /** Jumps (no animation), e.g. while a slider is dragged. Stops a running change (it resolves as interrupted). */
-  set(changes: ClipChanges & { state?: string }): void;
   /** Stops, removes the hidden <svg> and gives the element back its own clip-path / mask. */
   destroy(): void;
 }
@@ -109,10 +104,10 @@ const checkedOutline = (outline: false | ClipOutline): false | ClipOutline => {
   return outline;
 };
 
-/** Cuts `element` out by a morphing shape. */
-export const clip = (element: HTMLElement | SVGElement, options: ClipOptions = {}): Clip => {
+/** Cuts `element` out by a morphing shape, `init` first. */
+export const clip = (element: HTMLElement | SVGElement, init: string, options: ClipOptions = {}): Clip => {
   const {
-    set = clipShapes, state: initialState = 'circle', x = 50, y = 50, size, rotation = 0, roundness = 1,
+    set = clipShapes, x = 50, y = 50, size, rotation = 0, roundness = 1,
     outline = false, inverted = false, ...defaultMorphOptions
   } = options;
   const checkedState = (shapeSet: IconSet, state: string): string => {
@@ -127,7 +122,7 @@ export const clip = (element: HTMLElement | SVGElement, options: ClipOptions = {
   }
   /** Where the change goes (or what shows when nothing moves). */
   const target = {
-    state: checkedState(set, initialState), set: resolveIconSet(set, roundness), roundness,
+    state: checkedState(set, checkedInit(init, 'clip')), set: resolveIconSet(set, roundness), roundness,
     x, y, size, rotation, outline: checkedOutline(outline), inverted,
   };
   const pieceLength = pieceLengthOf(set);
@@ -337,19 +332,12 @@ export const clip = (element: HTMLElement | SVGElement, options: ClipOptions = {
   resizeObserver?.observe(element);
 
   return {
-    get state() { return target.state; },
     to(stateOrChanges: string | ClipChangeOptions, options: ClipChangeOptions = {}) {
       const { onEnd, duration, easing, ...changes } = typeof stateOrChanges === 'string'
         ? { ...options, state: stateOrChanges } : stateOrChanges;
       const result = change(changes, { ...defaultMorphOptions, ...(duration !== undefined && { duration }), ...(easing && { easing }) });
       if (onEnd) result.then(onEnd);
       return result;
-    },
-    set(changes) {
-      finish(true);
-      frame = null;
-      applyChanges(changes);
-      render();
     },
     destroy() {
       finish(true);

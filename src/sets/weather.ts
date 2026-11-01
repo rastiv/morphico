@@ -696,4 +696,4 @@ const withFrosty = (iconSet: IconSet): IconSet => {
   };
 };
 
-export const weatherIcons: IconSet = withFrosty(rainTwinnedIcons);
+export const iconsWeather: IconSet = withFrosty(rainTwinnedIcons);

@@ -22,7 +22,7 @@ const piece = (strokes: Record<string, Stroke[]>, extras: Pick<PieceSet, 'altern
 const BACKSLASH = lucideLine([6, 6], [18, 18]);
 const SLASH = lucideLine([6, 18], [18, 6]);
 
-export const menuIcons: IconSet = {
+export const iconsMenu: IconSet = {
   segmentCount: 1,
   strokeWidth: LUCIDE_STROKE_WIDTH,
   lineCap: 'round',

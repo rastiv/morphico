@@ -61,7 +61,7 @@ const slash: PieceSet = {
   pairLayouts: { on: { off: { draw: true } } },
 };
 
-export const bellIcons: IconSet = {
+export const iconsBell: IconSet = {
   segmentCount: 12,
   strokeWidth: LUCIDE_STROKE_WIDTH,
   lineCap: 'round',

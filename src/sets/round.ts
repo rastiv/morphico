@@ -40,7 +40,7 @@ const FIVE_JOIN_ANGLE = 237.2;
 const SEVEN_FOOT = pointAtY([16, TOP_BAR_Y], [7.45, 20.6], BASE_Y);
 
 // '-' '/' '.' ',' ':' are added by withTextCharacters (characters.ts)
-export const roundDigits: IconSet = withTextCharacters({
+export const digitsRound: IconSet = withTextCharacters({
   segmentCount: 12,
   strokeWidth: STROKE_WIDTH,
   lineCap: 'round',
