@@ -12,8 +12,16 @@ const SAMPLES_PER_STROKE = 48;
 /** Enough for the shape that needs the most (puzzle: 24 strokes, its knobs ≈ 40 segments); the rest spreads by length. */
 const SEGMENT_COUNT = 48;
 
+/** The names of clip()'s shapes (TypeScript checks the outlines below have exactly these). */
+export const clipShapeNames = [
+  'circle', 'ellipse', 'heart', 'sparkle', 'astroid', 'bookmark', 'shield', 'moon', 'tag', 'square', 'badge', 'triangle',
+  'droplet', 'pentagon', 'hexagon', 'octagon', 'squircle', 'star', 'rectangle-horizontal', 'message-circle',
+  'message-square', 'cloud', 'puzzle', 'club',
+] as const;
+export type ClipShape = typeof clipShapeNames[number];
+
 /** The shapes as Lucide draws them (Lucide coordinates); the set's states are made from these. */
-export const lucideShapeOutlines: Record<string, Stroke[]> = {
+export const lucideShapeOutlines: Record<ClipShape, Stroke[]> = {
   circle: [arc(12, 12, 10, -90, 270)],
   ellipse: ellipse(12, 12, 10, 6),
   heart: [

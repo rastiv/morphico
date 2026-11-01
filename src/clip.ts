@@ -8,6 +8,7 @@ import { checkedInit, resolveIconSet } from './roundness.ts';
 import { clampToUnit, DEFAULT_DURATION, prefersReducedMotion, shapesOf } from './morph.ts';
 import type { MorphOptions, MorphResult } from './morph.ts';
 import { clipShapes } from './sets/shapes.ts';
+import type { ClipShape } from './sets/shapes.ts';
 import { createSvgElement } from './svg.ts';
 import type { IconSet, PathNumbers } from './types.ts';
 
@@ -28,7 +29,7 @@ export interface ClipChanges {
   x?: Length;
   /** Centre of the shape, from the element's top edge (default 50 = the middle). */
   y?: Length;
-  /** Side of the shape's square (default: the largest square that fits the element). */
+  /** Side of the shape's square (default: 70 % of the element's shorter side). */
   size?: Length;
   /** Turn in degrees, clockwise; absolute (`rotation: 360` ends one full turn from 0). */
   rotation?: number;
@@ -40,10 +41,7 @@ export interface ClipChanges {
   inverted?: boolean;
 }
 
-export interface ClipOptions extends ClipChanges, MorphOptions {
-  /** The shape set (default: the built-in shapes, based on Lucide). */
-  set?: IconSet;
-}
+export type ClipOptions = ClipChanges & MorphOptions;
 
 export interface ClipChangeOptions extends ClipChanges, MorphOptions {
   /** Called when the change ends, with the same result the promise resolves to. */
@@ -57,13 +55,15 @@ export interface Clip {
    * change resolves with `interrupted: true`. Without animation when the user prefers reduced motion; `duration: 0`
    * jumps (e.g. while a slider is dragged).
    */
-  to(state: string, options?: ClipChangeOptions): Promise<MorphResult>;
+  to(state: ClipShape, options?: ClipChangeOptions): Promise<MorphResult>;
   to(changes: ClipChangeOptions): Promise<MorphResult>;
   /** Stops, removes the hidden <svg> and gives the element back its own clip-path / mask. */
   destroy(): void;
 }
 
 const GRID_SIZE = 24;
+/** Default size: this share of the element's shorter side (a square that fits, with room around it). */
+const DEFAULT_SIZE_SHARE = 0.7;
 const GRID_CENTER = 12;
 const DEGREE = Math.PI / 180;
 /** Masks and their clip regions reach far past the element, so bands and turned shapes are never cut by them. */
@@ -105,9 +105,9 @@ const checkedOutline = (outline: false | ClipOutline): false | ClipOutline => {
 };
 
 /** Cuts `element` out by a morphing shape, `init` first. */
-export const clip = (element: HTMLElement | SVGElement, init: string, options: ClipOptions = {}): Clip => {
+export const clip = (element: HTMLElement | SVGElement, init: ClipShape, options: ClipOptions = {}): Clip => {
   const {
-    set = clipShapes, x = 50, y = 50, size, rotation = 0, roundness = 1,
+    x = 50, y = 50, size, rotation = 0, roundness = 1,
     outline = false, inverted = false, ...defaultMorphOptions
   } = options;
   const checkedState = (shapeSet: IconSet, state: string): string => {
@@ -122,10 +122,10 @@ export const clip = (element: HTMLElement | SVGElement, init: string, options: C
   }
   /** Where the change goes (or what shows when nothing moves). */
   const target = {
-    state: checkedState(set, checkedInit(init, 'clip')), set: resolveIconSet(set, roundness), roundness,
+    state: checkedState(clipShapes, checkedInit(init, 'clip')), set: resolveIconSet(clipShapes, roundness), roundness,
     x, y, size, rotation, outline: checkedOutline(outline), inverted,
   };
-  const pieceLength = pieceLengthOf(set);
+  const pieceLength = pieceLengthOf(clipShapes);
   let frame: Frame | null = null; // null = resting at the target
   let running: { stopAnimation: () => void; resolvers: ((result: MorphResult) => void)[] } | null = null;
   let elementWidth = 0, elementHeight = 0;
@@ -198,7 +198,7 @@ export const clip = (element: HTMLElement | SVGElement, init: string, options: C
   const restingPlacement = (): PixelPlacement => ({
     centerX: lengthToPixels(target.x, elementWidth, 'x'),
     centerY: lengthToPixels(target.y, elementHeight, 'y'),
-    side: target.size === undefined ? Math.min(elementWidth, elementHeight) : lengthToPixels(target.size, elementWidth, 'size'),
+    side: target.size === undefined ? DEFAULT_SIZE_SHARE * Math.min(elementWidth, elementHeight) : lengthToPixels(target.size, elementWidth, 'size'),
   });
   const restingFrame = (): Frame =>
     ({ shape: shapesOf(target.set)[target.state], rotation: target.rotation, placement: restingPlacement() });
@@ -254,7 +254,7 @@ export const clip = (element: HTMLElement | SVGElement, init: string, options: C
     if (changes.state !== undefined) target.state = checkedState(target.set, changes.state);
     if (changes.roundness !== undefined && changes.roundness !== target.roundness) {
       target.roundness = changes.roundness;
-      target.set = resolveIconSet(set, changes.roundness);
+      target.set = resolveIconSet(clipShapes, changes.roundness);
     }
     if (changes.x !== undefined) target.x = changes.x;
     if (changes.y !== undefined) target.y = changes.y;

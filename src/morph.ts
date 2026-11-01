@@ -10,14 +10,14 @@ import type { IconSet, PathNumbers } from './types.ts';
 export type EasingName = keyof typeof easings;
 
 export interface MorphOptions {
-  /** Length of a morph in milliseconds (default 400). */
+  /** Length of a morph in milliseconds (default 300). */
   duration?: number;
   /** An easing name or your own function `(progress) => easedProgress` (default `'easeInOutCubic'`). */
   easing?: EasingName | Easing;
 }
 
 export interface MorphResult {
-  /** The state the morph was heading to. */
+  /** The state the morph was heading to (for text(): the text). */
   state: string;
   /** `true` when a newer morph (or `destroy()`) took over before this one finished. */
   interrupted: boolean;
@@ -27,7 +27,7 @@ export interface MorphResult {
 export const EMPTY_STATE = ' ';
 /** How small a shape gets while it fades into (or out of) the empty state. */
 const EMPTY_SCALE = 0.3;
-export const DEFAULT_DURATION = 400;
+export const DEFAULT_DURATION = 300;
 
 // default layouts of every state, computed once per set on first use (nothing runs at import)
 const shapesBySet = new WeakMap<IconSet, Record<string, PathNumbers>>();

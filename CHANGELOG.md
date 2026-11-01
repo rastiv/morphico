@@ -3,6 +3,17 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 patch = nicer transitions and fixes, minor = new icon sets or options, major = API changes or a changed resting look of an icon.
 
+## Unreleased
+
+- Every layer's default `duration` is 300 ms (was 400, face 500).
+- `clip()`: by default the shape sits in the middle at 70 % of the element's shorter side (was as large as fits).
+  Its shape names are exported as `clipShapeNames` with the type `ClipShape` (like `faceExpressionNames` /
+  `FaceExpression`): editors suggest them, TypeScript catches typos. The `set` option is gone (only the built-in
+  shapes).
+- **Breaking (small):** `text().to()` resolves with `{ state, interrupted }` like the other layers (was
+  `{ value, interrupted }`; the type `TextResult` is gone, it's `MorphResult`). `ChangeOptions` is now
+  `IconChangeOptions`. `IconSet` and `TextLayout` are no longer exported: only the built-in sets are supported.
+
 ## 0.5.0
 
 - **Breaking: sets are imported, not named.** Every set is its own import, and `set` takes the set object:

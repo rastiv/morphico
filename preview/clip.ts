@@ -5,15 +5,16 @@ import { clip } from '../src/clip.ts';
 import type { Clip, ClipChanges, ClipOutline, Length } from '../src/clip.ts';
 import type { EasingName } from '../src/morph.ts';
 import { defaultBreakpoints, layoutStrokes, toPathData } from '../src/geometry.ts';
-import { lucideShapeOutlines } from '../src/sets/shapes.ts';
+import { clipShapeNames, lucideShapeOutlines } from '../src/sets/shapes.ts';
+import type { ClipShape } from '../src/sets/shapes.ts';
 
 type Unit = '%' | 'px';
 type PlacementKey = 'x' | 'y' | 'size';
 type Band = NonNullable<ClipOutline['band']>;
 
 const PLACEMENT_KEYS: PlacementKey[] = ['x', 'y', 'size'];
-const SHAPE_NAMES = Object.keys(lucideShapeOutlines);
-const FIRST_SHAPE = 'circle';
+const SHAPE_NAMES = clipShapeNames;
+const FIRST_SHAPE: ClipShape = 'circle';
 const BUTTON_SEGMENTS = 48;
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
@@ -82,7 +83,7 @@ const elementSize = (): { width: number; height: number } => {
 const fittingSize = (): string => `${Math.round(Math.min(elementSize().width, elementSize().height))}px`;
 
 /** What the clips show (or move to), as clip() options — also what the controls and the Code panel show. */
-const shown: { state: string; x: Length; y: Length; size: Length; rotation: number; roundness: number; outline: false | ClipOutline; inverted: boolean } = {
+const shown: { state: ClipShape; x: Length; y: Length; size: Length; rotation: number; roundness: number; outline: false | ClipOutline; inverted: boolean } = {
   state: FIRST_SHAPE, x: 50, y: 50, size: fittingSize(), rotation: 0, roundness: 1, outline: false, inverted: false,
 };
 
@@ -138,7 +139,7 @@ const showControls = (): void => {
 const motion = () => ({ duration: Number(durationInput.value), easing: easingSelect.value as EasingName });
 
 /** Animates every clip to the shown options (with a new shape if `state` is given). */
-const animateTo = async (changes: ClipChanges & { state?: string }): Promise<void> => {
+const animateTo = async (changes: ClipChanges & { state?: ClipShape }): Promise<void> => {
   Object.assign(shown, changes);
   showControls();
   const { state, ...rest } = changes;
@@ -151,7 +152,7 @@ const animateTo = async (changes: ClipChanges & { state?: string }): Promise<voi
 };
 
 /** Jumps every clip to the shown options (sliders): to() with duration 0. */
-const jumpTo = (changes: ClipChanges & { state?: string }): void => {
+const jumpTo = (changes: ClipChanges & { state?: ClipShape }): void => {
   Object.assign(shown, changes);
   const { state, ...rest } = changes;
   for (const oneClip of clips) void (state ? oneClip.to(state, { ...rest, duration: 0 }) : oneClip.to({ ...rest, duration: 0 }));
@@ -161,7 +162,7 @@ const jumpTo = (changes: ClipChanges & { state?: string }): void => {
 // ---- shapes ----
 
 /** A shape button shows the Lucide icon as Lucide draws it. */
-const iconButton = (name: string): HTMLButtonElement => {
+const iconButton = (name: ClipShape): HTMLButtonElement => {
   const strokes = lucideShapeOutlines[name];
   const icon = document.createElementNS(SVG_NAMESPACE, 'svg');
   icon.setAttribute('viewBox', '0 0 24 24');
@@ -177,7 +178,7 @@ const iconButton = (name: string): HTMLButtonElement => {
   return button;
 };
 
-const morphTo = (name: string): Promise<void> => {
+const morphTo = (name: ClipShape): Promise<void> => {
   const turn = name !== shown.state && turnCheckbox.checked ? Number(turnSelect.value) : 0;
   return animateTo({ state: name, rotation: shown.rotation + turn });
 };

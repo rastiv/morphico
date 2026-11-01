@@ -41,7 +41,6 @@ const BLINK_SHUT = 50;
 const BLINK_OPENING = 150;
 const AUTO_BLINK_MIN_PAUSE = 2500;
 const AUTO_BLINK_EXTRA_PAUSE = 3500;
-const DEFAULT_FACE_DURATION = DEFAULT_DURATION + 100;
 /** Expressions whose eyes are already shut: blinking does nothing. */
 const EYES_SHUT: readonly FaceExpression[] = ['asleep', 'laughing'];
 
@@ -101,7 +100,7 @@ export const face = (element: Element, init: FaceExpression, options: FaceOption
     updateLabel();
     const fromPieces = shownPieces;
     const toPieces = expressions[nextState];
-    const duration = morphOptions.duration ?? DEFAULT_FACE_DURATION;
+    const duration = morphOptions.duration ?? DEFAULT_DURATION;
     if (prefersReducedMotion() || duration <= 0) {
       shownPieces = toPieces;
       render();

@@ -1,39 +1,100 @@
 # morphico
 
-Morphing line-art icons for the web: digits (and later other icon states) that smoothly change from one to another by interpolating SVG path data. No runtime dependencies.
+Morphing SVG for the web: icons, digits, cut-outs and faces that smoothly change from one state to another — play
+turns into pause, 4 turns into 5, a star-shaped photo turns into a heart, a smile turns into a frown. Small, no
+dependencies, works in any framework or none.
 
-> **Status:** early development (0.x): the API may still change.
+> **Status:** 0.x — the API may still change before 1.0.
 
-## Install
+## Quick start
+
+Save this as an `.html` file and open it — no install, no build:
+
+```html
+<!doctype html>
+<button id="player" style="font-size: 48px; border: 0; background: none; color: #333; cursor: pointer"></button>
+
+<script src="https://cdn.jsdelivr.net/npm/morphico"></script>
+<script>
+  const { icon, iconSets } = morphico;
+
+  const button = document.querySelector('#player');
+  const player = icon(button, 'play', { set: iconSets.media });   // draw a "play" icon into the button
+
+  let playing = false;
+  button.addEventListener('click', () => {
+    playing = !playing;
+    player.to(playing ? 'pause' : 'play');                       // morph to the other icon
+  });
+</script>
+```
+
+The icon is `1em` big and takes the CSS `color`, like text. (For a real site, pin a version in the URL:
+`https://cdn.jsdelivr.net/npm/morphico@<version>`.)
+
+With a bundler (Vite, webpack, esbuild …), install it and import what you use:
 
 ```sh
 npm install morphico
 ```
 
 ```ts
-import { icon, text, clip, face } from 'morphico';
-import { digitsRound } from 'morphico/sets/round';     // every set is its own import
-import { iconsWeather } from 'morphico/sets/weather';
+import { icon } from 'morphico';
+import { iconsMedia } from 'morphico/sets/media';   // every set is its own import
+
+const player = icon(document.querySelector('#player'), 'play', { set: iconsMedia });
+player.to('pause');
 ```
 
-Every set is a separate file, so a bundler (Vite, webpack, esbuild, Rollup …) only ships the sets and functions a
-page uses — e.g. `icon()` with one icon set is about 13–21 KB gzipped, everything about 63 KB. `clip()` and `face()`
-bring their own shapes / expressions. To pick sets by name at run time, `import { iconSets } from 'morphico/all'`
-(`iconSets.weather` …; this imports every set).
+## The four parts
 
-Or from a CDN, as a classic script with the global `morphico` — one file with everything, sets by name in
-`morphico.iconSets`:
+All four work the same way: **create** with `(element, what to show first, options)`, **change** with `to()`,
+**remove** with `destroy()`. `to()` returns a promise that resolves when the morph ends.
 
-```html
-<script src="https://cdn.jsdelivr.net/npm/morphico"></script>
-<script>
-  const { icon, text, clip, face, iconSets } = morphico;
-  icon(document.querySelector('#weather'), 'sunny', { set: iconSets.weather });
-</script>
+| | Create | Change |
+| --- | --- | --- |
+| [**icon**](#one-icon-iconelement-init-options) — one icon or digit | `icon(el, 'play', { set: iconsMedia })` | `.to('pause')` |
+| [**text**](#a-line-of-characters-textelement-init-options) — a line of digits, e.g. a clock | `text(el, '04:59', { set: digitsRound })` | `.to('05:00')` |
+| [**clip**](#a-cut-out-clipelement-init-options) — any element cut out by a shape | `clip(el, 'star')` | `.to('heart')` |
+| [**face**](#a-face-faceelement-init-options) — a face with feelings | `face(el, 'normal')` | `.to('smiling')`, `.blink()` |
+
+```ts
+await clock.to('05:00');                     // wait for the morph to end
+clock.to('05:01', { duration: 600 });        // options for one change
+clock.destroy();                             // remove it (e.g. when a component unmounts)
 ```
 
-Every layer is created the same way — `layer(element, init, options)`: the element to draw into, what it shows
-first, and the settings — and changes with `to()`, which returns a promise. `destroy()` removes it.
+### In React
+
+```tsx
+import { useEffect, useRef } from 'react';
+import { icon, type Icon } from 'morphico';
+import { iconsMedia } from 'morphico/sets/media';
+
+export function PlayIcon({ playing }: { playing: boolean }) {
+  const element = useRef<HTMLSpanElement>(null);
+  const player = useRef<Icon | null>(null);
+
+  useEffect(() => {                                        // create once, remove on unmount
+    player.current = icon(element.current!, playing ? 'pause' : 'play', { set: iconsMedia });
+    return () => player.current?.destroy();
+  }, []);
+
+  useEffect(() => { player.current?.to(playing ? 'pause' : 'play'); }, [playing]);   // morph on change
+
+  return <span ref={element} />;
+}
+```
+
+## Install details
+
+Every set is a separate file, so a bundler only ships the sets and functions a page uses — e.g. `icon()` with one
+icon set is about 13–21 KB gzipped, everything about 63 KB. `clip()` and `face()` bring their own shapes /
+expressions. To pick sets by name at run time, `import { iconSets } from 'morphico/all'` (`iconSets.weather` …; this
+imports every set).
+
+The classic script from the CDN (`https://cdn.jsdelivr.net/npm/morphico`) is one file with everything: the global
+`morphico` has `icon`, `text`, `clip`, `face` and the sets by name in `morphico.iconSets`.
 
 ## One icon: `icon(element, init, options)`
 
@@ -119,17 +180,18 @@ photo.destroy();                                          // the element is whol
 Shapes (based on [Lucide](https://lucide.dev)): `circle`, `ellipse`, `heart`, `sparkle`, `astroid`, `bookmark`,
 `shield`, `moon`, `tag`, `square`, `badge`, `triangle`, `droplet`, `pentagon`, `hexagon`, `octagon`, `squircle`,
 `star`, `rectangle-horizontal`, `message-circle`, `message-square`, `cloud`, `puzzle`, `club`. A diamond is the `square`
-turned 45°, a portrait rectangle `rectangle-horizontal` turned 90° (`rotation`).
+turned 45°, a portrait rectangle `rectangle-horizontal` turned 90° (`rotation`). The names are also exported as
+`clipShapeNames` (type `ClipShape`: editors suggest them and TypeScript catches typos).
 
 | Option | Default | |
 | --- | --- | --- |
 | `x`, `y` | `50` | The shape's **centre**. A number is %, or a string `'40%'` / `'120px'` (% of the element's width for `x`, height for `y`) |
-| `size` | fits | The side of the shape's square (% of the element's width, or px). The shape keeps its own proportions inside that square. Default: the largest square that fits the element |
+| `size` | 70 % | The side of the shape's square (% of the element's width, or px). The shape keeps its own proportions inside that square. Default: 70 % of the element's shorter side, so the shape sits in the middle with room around it |
 | `rotation` | `0` | Degrees, clockwise, **absolute**: `rotation: 360` ends one full turn from 0. The shape turns rigidly, also in a wide or tall element |
 | `roundness` | `1` | Corners: `0` = sharp … `1` = the shape's own (the maximum) |
 | `outline` | `false` | `{ width, band }`: only a band of `width` px along the edge shows; `band`: `'inside'` (default), `'centre'` or `'outside'` the edge. Not animated |
 | `inverted` | `false` | `true`: the other way round — the shape (or band) is a hole, the rest of the element shows. Not animated |
-| `duration`, `easing` | `400`, `'easeInOutCubic'` | As for icons; also per `to()` call |
+| `duration`, `easing` | `300`, `'easeInOutCubic'` | As for icons; also per `to()` call |
 
 Everything except `outline` and `inverted` (they switch at once) animates together in `to()`; `duration: 0` jumps. How it works: a filled shape uses CSS `clip-path: url(#…)`,
 an outlined one `mask: url(#…)` (clip-path has no line width); the `<clipPath>` / `<mask>` sit in a small hidden
@@ -166,7 +228,7 @@ morphs into any other. `wink-left` / `wink-right` = the eye that closes, as seen
 | `pupilColor` | `'white'` | Colour of the pupils. Brows, eyes and mouth take the CSS `color` |
 | `blink` | `true` | Blink by itself every few seconds |
 | `size` | `'100%'` | CSS width and height of the face (by default it fills the element) |
-| `duration`, `easing` | `500`, `'easeInOutCubic'` | As for icons; also per `to()` call |
+| `duration`, `easing` | `300`, `'easeInOutCubic'` | As for icons; also per `to()` call |
 
 The face draws no background: a disc, card or anything else behind it is the element's own CSS. The pupils only show
 inside the eyes (an eyelid covers them). With reduced motion the face changes without animation and doesn't blink.
@@ -177,7 +239,7 @@ inside the eyes (an eyelid covers them). With reduced motion the face changes wi
 | --- | --- | --- | --- |
 | `set` | both | **required** | A set object: a digit set (`digitsRound` …) for `text()`, any set for `icon()` — see above |
 | `size` | both | `'1em'` | CSS size (icon: width and height; text: height). `1em` follows the font size |
-| `duration` | both | `400` | Milliseconds |
+| `duration` | both | `300` | Milliseconds |
 | `easing` | both | `'easeInOutCubic'` | `'linear'`, `'easeInOutCubic'`, `'easeOutBack'`, `'easeOutElastic'`, or a function `(progress) => easedProgress` |
 | `strokeWidth` | both | per set | Line width. A number is in grid units (an icon is 24 × 24; digits use about 1.1–1.6, icon sets 1.78) and scales with the size; a CSS length (`'2px'`, `'0.1rem'`, `'0.08em'`) stays that wide at any size |
 | `lineCap` | both | per set | `'round'`, `'butt'`, `'square'` |
@@ -196,8 +258,10 @@ inside the eyes (an eyelid covers them). With reduced motion the face changes wi
 - **Interrupting:** calling `to()` during a morph starts the new morph from the shape on screen.
   The earlier promise resolves with `{ interrupted: true }`; promises never stay pending.
 - **Reduced motion:** when the user's system asks for reduced motion, shapes change without animation.
-- **Accessibility:** the icon / line has `role="img"` and an `aria-label` with the current value.
-- **Server-side rendering:** importing does not touch the DOM; only `icon()` / `text()` / `clip()` / `face()` do.
+- **Accessibility:** icons, text lines and faces have `role="img"` and an `aria-label` with what they show.
+- **Server-side rendering:** importing does not touch the DOM; only calling `icon()` / `text()` / `clip()` / `face()` does
+  (in React: inside `useEffect`).
+- **TypeScript:** types are included (`Icon`, `IconOptions`, `Text`, `Clip`, `Face`, `ClipShape`, `FaceExpression` …).
 
 ## Development
 

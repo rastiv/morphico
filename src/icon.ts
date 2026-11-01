@@ -15,7 +15,7 @@ export interface IconOptions extends MorphOptions, StyleOptions {
   size?: string;
 }
 
-export interface ChangeOptions extends MorphOptions {
+export interface IconChangeOptions extends MorphOptions {
   /** Called when the morph ends, with the same result the promise resolves to. */
   onEnd?: (result: MorphResult) => void;
 }
@@ -25,7 +25,7 @@ export interface Icon {
    * Morphs to `state` (`'0'`…`'9'`, `'-'`, or `' '` for empty). The promise resolves when the morph ends;
    * an interrupted morph resolves with `interrupted: true`. Without animation when the user prefers reduced motion.
    */
-  to(state: string, options?: ChangeOptions): Promise<MorphResult>;
+  to(state: string, options?: IconChangeOptions): Promise<MorphResult>;
   /** Stops any morph and removes the icon from the page. */
   destroy(): void;
 }

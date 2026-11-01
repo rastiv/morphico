@@ -1,7 +1,7 @@
 // Layer 2: a line of characters (clock, counter, date) in narrow cells; changed digits morph.
 // Every character reuses the 24×24 icon drawing; only the viewBox is narrowed to its cell.
 import { createMorphingPath, hasState } from './morph.ts';
-import type { MorphingPath, MorphOptions } from './morph.ts';
+import type { MorphingPath, MorphOptions, MorphResult } from './morph.ts';
 import { checkedIconSet, checkedInit } from './roundness.ts';
 import { createIconSvg, createStrokedElement } from './svg.ts';
 import type { StyleOptions } from './svg.ts';
@@ -25,16 +25,9 @@ export interface TextOptions extends MorphOptions, StyleOptions {
   spacing?: number;
 }
 
-export interface TextResult {
-  /** The text the change was heading to. */
-  value: string;
-  /** `true` when a newer `to()` (or `destroy()`) took over before every digit finished. */
-  interrupted: boolean;
-}
-
 export interface TextChangeOptions extends MorphOptions {
   /** Called when every changed digit has finished, with the same result the promise resolves to. */
-  onEnd?: (result: TextResult) => void;
+  onEnd?: (result: MorphResult) => void;
 }
 
 export interface Text {
@@ -44,7 +37,7 @@ export interface Text {
    * one width, `:` `.` `,` half of it, `/` 0.7 of it — so `5` ↔ `-` or `.` ↔ `,` morph, `5` ↔ `:` rebuilds.
    * Pad with spaces (e.g. `String(count).padStart(3, ' ')`) to keep counters morphing.
    */
-  to(value: string, options?: TextChangeOptions): Promise<TextResult>;
+  to(value: string, options?: TextChangeOptions): Promise<MorphResult>;
   /** Stops all morphs and removes the line from the page. */
   destroy(): void;
 }
@@ -107,22 +100,22 @@ export const text = (element: Element, init: string, options: TextOptions): Text
     line.replaceChildren(...cells.map((cell) => cell.svg));
   };
 
-  const show = (nextValue: string, { onEnd, ...morphOptions }: TextChangeOptions = {}): Promise<TextResult> => {
+  const show = (nextValue: string, { onEnd, ...morphOptions }: TextChangeOptions = {}): Promise<MorphResult> => {
     value = [...nextValue.replace(UNSUPPORTED_CHARACTERS, '')].filter((character) => hasState(iconSet, character)).join('');
     line.setAttribute('aria-label', value.trim());
     const characters = [...value];
     const sameLayout = characters.length === cells.length
       && characters.every((character, index) => widthOf(character) === cells[index].width);
-    let change: Promise<TextResult>;
+    let change: Promise<MorphResult>;
     if (sameLayout) {
       const morphs = cells.map((cell, index) =>
         cell.morphingPath.morphTo(characters[index], { ...defaultMorphOptions, ...morphOptions }));
       const finishedValue = value;
       change = Promise.all(morphs).then((results) =>
-        ({ value: finishedValue, interrupted: results.some((result) => result.interrupted) }));
+        ({ state: finishedValue, interrupted: results.some((result) => result.interrupted) }));
     } else {
       rebuild(characters);
-      change = Promise.resolve({ value, interrupted: false });
+      change = Promise.resolve({ state: value, interrupted: false });
     }
     if (onEnd) change.then(onEnd);
     return change;
