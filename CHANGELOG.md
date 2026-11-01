@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 patch = nicer transitions and fixes, minor = new icon sets or options, major = API changes or a changed resting look of an icon.
 
-## Unreleased
+## 0.4.0
 
 - New `face(element, options)`: a face of 7 soft pieces (brows, eyes, pupils, mouth) that morphs between 32
   expressions (`normal`, `smiling`, `angry`, `sad`, `surprised`, `wink-left` …; list in `faceExpressionNames`) and
