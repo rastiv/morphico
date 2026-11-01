@@ -116,6 +116,43 @@ an outlined one `mask: url(#…)` (clip-path has no line width); the `<clipPath>
 `<svg>` that `clip()` adds to the page. It follows the element's size (`ResizeObserver`). Overflow beyond the element is
 cut off, as with any clip-path.
 
+## A face: `face(element, options)`
+
+A face of 7 soft pieces — 2 brows, 2 eyes, 2 pupils and a mouth — that morphs between feelings and blinks.
+
+```html
+<div id="robot" style="width: 160px; height: 160px; border-radius: 50%; background: #e4e2d6; color: #8b8e8e"></div>
+```
+
+```ts
+import { face } from 'morphico';
+
+const robot = face(document.querySelector('#robot'), { state: 'normal' });
+
+await robot.to('smiling');                    // morph
+robot.to('angry', { duration: 300, onEnd: (result) => console.log(result) });
+robot.blink();                                // close and open the eyes once, on top of any expression
+robot.state;                                  // 'angry'
+robot.destroy();                              // removes the face, stops blinking
+```
+
+Expressions: `normal`, `smiling`, `pleading`, `wonder`, `focused`, `fright`, `angry`, `asleep`, `sad`,
+`surprised`, `laughing`, `tired`, `wink-left`, `wink-right`, `suspicious`, `confused`, `smug`, `irritated`,
+`bored`, `curious`, `empathetic`, `guilty`, `worried`, `disappointed`, `ashamed`, `embarrassed`, `yearning`,
+`triumphant`, `proud`, `excited`, `scornful`, `disgusted` (also exported as `faceExpressionNames`). Any one
+morphs into any other. `wink-left` / `wink-right` = the eye that closes, as seen.
+
+| Option | Default | |
+| --- | --- | --- |
+| `state` | `'normal'` | The expression shown first |
+| `pupilColor` | `'white'` | Colour of the pupils. Brows, eyes and mouth take the CSS `color` |
+| `blink` | `true` | Blink by itself every few seconds |
+| `size` | `'100%'` | CSS width and height of the face (by default it fills the element) |
+| `duration`, `easing` | `500`, `'easeInOutCubic'` | As for icons; also per `to()` call |
+
+The face draws no background: a disc, card or anything else behind it is the element's own CSS. The pupils only show
+inside the eyes (an eyelid covers them). With reduced motion the face changes without animation and doesn't blink.
+
 ## Options
 
 | Option | For | Default | |
@@ -143,7 +180,7 @@ cut off, as with any clip-path.
   The earlier promise resolves with `{ interrupted: true }`; promises never stay pending.
 - **Reduced motion:** when the user's system asks for reduced motion, shapes change without animation.
 - **Accessibility:** the icon / line has `role="img"` and an `aria-label` with the current value.
-- **Server-side rendering:** importing does not touch the DOM; only `icon()` / `text()` / `clip()` do.
+- **Server-side rendering:** importing does not touch the DOM; only `icon()` / `text()` / `clip()` / `face()` do.
 
 ## Development
 

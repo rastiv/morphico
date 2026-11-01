@@ -1,8 +1,9 @@
 // Preview page (dev only, not published). Served as JavaScript by tools/serve.ts.
-// Three tabs: Digits (digit sets + the text line), Icons (icon families) and Clip (clip.ts: an element cut out by a
-// morphing shape). The style panel overrides the set's own look the same way the library options do (strokeWidth,
+// Four tabs: Digits (digit sets + the text line), Icons (icon families), Clip (clip.ts: an element cut out by a
+// morphing shape) and Face (face.ts: the face() experiment). The style panel overrides the set's own look the same way the library options do (strokeWidth,
 // lineCap, lineJoin, fill, roundness).
 import './clip.ts';
+import './face.ts';
 import { animate, easings } from '../src/engine.ts';
 import {
   defaultShapes, drawnPieces, interpolate, pieceLengthOf, rotateAroundCenter, scaleAroundCenter, shapeForPair, splitPieces,
@@ -18,7 +19,7 @@ import type { IconSet, PathNumbers } from '../src/types.ts';
 
 /** Tabs that show icon sets (the Clip tab has its own view). */
 type SetTab = 'digits' | 'icons';
-type Tab = SetTab | 'clip';
+type Tab = SetTab | 'clip' | 'face';
 /** What the style panel changes; a missing value means "the set's own". */
 interface StyleChoices extends StyleOptions {
   roundness?: number;
@@ -44,6 +45,7 @@ const elementById = <ElementType extends Element = HTMLElement>(id: string): Ele
 const tabButtons = elementById('tabs');
 const setsView = elementById('sets-view');
 const clipView = elementById('clip-view');
+const faceView = elementById('face-view');
 const setButtons = elementById('set-buttons');
 const stateButtons = elementById('state-buttons');
 const morphPath = elementById<SVGPathElement>('morph-path');
@@ -304,9 +306,10 @@ function selectTab(nextTab: Tab): void {
   for (const button of tabButtons.querySelectorAll<HTMLButtonElement>('button')) {
     button.classList.toggle('active', button.dataset.tab === nextTab);
   }
-  setsView.hidden = nextTab === 'clip';
+  setsView.hidden = nextTab === 'clip' || nextTab === 'face';
   clipView.hidden = nextTab !== 'clip';
-  if (nextTab === 'clip') {
+  faceView.hidden = nextTab !== 'face';
+  if (nextTab === 'clip' || nextTab === 'face') {
     setAutoPlay(false);
     setLiveClock(false);
     return;
@@ -511,7 +514,7 @@ textSizeInput.oninput = () => {
 };
 liveClockToggle.onchange = () => setLiveClock(liveClockToggle.checked);
 
-// the address (#digits / #icons / #clip) wins over the remembered tab
-const TABS: Tab[] = ['digits', 'icons', 'clip'];
+// the address (#digits / #icons / #clip / #face) wins over the remembered tab
+const TABS: Tab[] = ['digits', 'icons', 'clip', 'face'];
 const startTab = location.hash.slice(1) || settings.read('tab');
 selectTab(TABS.find((someTab) => someTab === startTab) ?? 'digits');

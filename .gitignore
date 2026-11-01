@@ -1,5 +1,6 @@
 dist/
 icons/
+faces/
 .build/
 node_modules/
 *.log

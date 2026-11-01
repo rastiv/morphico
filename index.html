@@ -110,6 +110,23 @@
   .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
   .presets button { padding: 4px 10px; border: 1px solid var(--faint); border-radius: 999px; background: transparent; color: var(--dim); font-size: 12.5px; cursor: pointer; }
   .presets button:hover { color: var(--fg); border-color: var(--dim); }
+
+  /* Face tab */
+  #face-view { --face-features: #8b8e8e; --face-pupils: #ffffff; }
+  .face-features { fill: var(--face-features); }
+  .face-pupils { fill: var(--face-pupils); }
+  .face-stage { width: min(380px, 100%); aspect-ratio: 1; padding: 24px; background: var(--panel); border-radius: 18px; }
+  /* the element face() draws into: its CSS color colors brows, eyes and mouth */
+  #face-target { width: 100%; height: 100%; color: var(--face-features); }
+  #face-target svg { display: block; }
+  .face-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 560px; }
+  .face-buttons button { display: grid; justify-items: center; gap: 4px; width: 76px; padding: 8px 4px 6px; border: 1px solid var(--faint); border-radius: 12px; background: var(--panel); color: var(--dim); font-size: 12px; cursor: pointer; }
+  .face-buttons button:hover { color: var(--fg); }
+  .face-buttons button.active { border-color: var(--accent); color: var(--fg); }
+  .face-buttons svg { width: 44px; height: 44px; }
+  .face-actions { display: flex; gap: 8px; }
+  .face-colors { grid-template-columns: 88px auto; }
+  .face-colors input[type=color] { width: 44px; height: 26px; padding: 0; border: 1px solid var(--faint); border-radius: 6px; background: var(--panel); cursor: pointer; }
 </style>
 </head>
 <body>
@@ -119,6 +136,7 @@
     <button data-tab="digits">Digits</button>
     <button data-tab="icons">Icons</button>
     <button data-tab="clip">Clip</button>
+    <button data-tab="face">Face</button>
   </nav>
 </header>
 
@@ -364,6 +382,58 @@
     <section class="panel">
       <h2>Code</h2>
       <pre id="clip-code"></pre>
+    </section>
+  </aside>
+</div>
+
+<!-- Face tab: the library's face() (preview/face.ts) -->
+<div class="layout" id="face-view" hidden>
+  <main class="workspace">
+    <div class="face-stage">
+      <div id="face-target"></div>
+    </div>
+    <div class="face-buttons" id="face-buttons" role="group" aria-label="Expression"></div>
+    <div class="face-actions">
+      <button class="play" id="face-blink">Blink</button>
+      <button class="play" id="face-play">▶ Play through all</button>
+    </div>
+  </main>
+
+  <aside>
+    <section class="panel">
+      <h2>Motion</h2>
+      <div class="rows">
+        <label for="face-duration">Duration</label>
+        <input id="face-duration" type="range" min="150" max="2000" step="50" value="500">
+        <output id="face-duration-output">500 ms</output>
+
+        <label for="face-easing">Easing</label>
+        <select id="face-easing">
+          <option value="easeInOutCubic">ease in-out</option>
+          <option value="linear">linear</option>
+          <option value="easeOutBack">overshoot</option>
+          <option value="easeOutElastic">elastic</option>
+        </select>
+        <span></span>
+
+        <label class="check" style="grid-column: 1 / 4"><input id="face-auto-blink" type="checkbox" checked> Blink by itself every few seconds</label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Colors</h2>
+      <div class="rows face-colors">
+        <label for="face-features-color">Features</label>
+        <input id="face-features-color" type="color" value="#8b8e8e">
+        <label for="face-pupils-color">Pupils</label>
+        <input id="face-pupils-color" type="color" value="#ffffff">
+      </div>
+      <p class="hint">Brows, eyes and mouth take the element's CSS <code>color</code>; the pupils the <code>pupilColor</code> option (white by default). Any background behind the face is the element's own.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Code</h2>
+      <pre id="face-code"></pre>
     </section>
   </aside>
 </div>

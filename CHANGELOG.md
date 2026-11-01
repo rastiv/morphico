@@ -5,6 +5,10 @@ patch = nicer transitions and fixes, minor = new icon sets or options, major = A
 
 ## Unreleased
 
+- New `face(element, options)`: a face of 7 soft pieces (brows, eyes, pupils, mouth) that morphs between 32
+  expressions (`normal`, `smiling`, `angry`, `sad`, `surprised`, `wink-left` …; list in `faceExpressionNames`) and
+  blinks — by itself every few seconds (`blink` option) or on `blink()`. Features take the CSS color, pupils
+  `pupilColor`.
 - `clip()` shapes: new `club` (♣, without its stem). Removed `rectangle-vertical` and `diamond`: use
   `rectangle-horizontal` with `rotation: 90` and `square` with `rotation: 45`.
 - `clip()`: new option `inverted` — the shape (or the outlined band) becomes a hole and the rest of the element
