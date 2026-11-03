@@ -12,7 +12,8 @@ import { cubic } from '../geometry.ts';
 import { withTextCharacters } from './characters.ts';
 import type { IconSet } from '../types.ts';
 
-// '-' '/' '.' ',' ':' are added by withTextCharacters (characters.ts)
+// '-' '/' '.' ',' ':' and the symbols '+' '%' '$' '€' '£' (in this set's box and corners) are added by
+// withTextCharacters (characters.ts, symbols.ts)
 export const digitsHandwritten: IconSet = withTextCharacters({
   segmentCount: 16,
   strokeWidth: 1.04,
@@ -134,4 +135,4 @@ export const digitsHandwritten: IconSet = withTextCharacters({
   },
   spins: {},
   textLayout: { cellWidth: 9, spacing: 4, baselineY: 20.2, colonDotsY: [8, 16] },
-});
+}, { left: 7.5, right: 16.5, top: 4.2, bottom: 19.8, corners: 'round' });

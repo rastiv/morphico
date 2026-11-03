@@ -29,7 +29,7 @@ interface StyleChoices extends StyleOptions {
 const SET_NAMES = Object.keys(iconSets) as IconSetName[];
 const DEFAULT_SETS: Record<SetTab, IconSetName> = { digits: 'round', icons: 'media' };
 /** Buttons of a digit set: the digits, then the other characters text() shows (space = empty). */
-const DIGIT_SET_STATES = [...'0123456789-:.,/ '];
+const DIGIT_SET_STATES = [...'0123456789-:.,/+%$€£ '];
 const EMPTY = ' ';
 /** How small a shape gets while it fades into (or out of) the empty state — as in the library (morph.ts). */
 const EMPTY_SCALE = 0.3;

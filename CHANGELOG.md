@@ -3,8 +3,10 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 patch = nicer transitions and fixes, minor = new icon sets or options, major = API changes or a changed resting look of an icon.
 
-## Unreleased
+## 0.6.0
 
+- Digit sets: new symbols `+` `%` `$` `€` `£` for prices and discounts (`text(el, '€39.99', …)`, `'-20%'`), drawn in
+  each set's own style. They morph into each other (`$` ↔ `€` ↔ `£`, `-` ↔ `+`) and into digits.
 - Every layer's default `duration` is 300 ms (was 400, face 500).
 - `clip()`: by default the shape sits in the middle at 70 % of the element's shorter side (was as large as fits).
   Its shape names are exported as `clipShapeNames` with the type `ClipShape` (like `faceExpressionNames` /

@@ -44,7 +44,8 @@ const SIX: Stroke[] = [
   ),
 ];
 
-// '-' '/' '.' ',' ':' are added by withTextCharacters (characters.ts)
+// '-' '/' '.' ',' ':' and the symbols '+' '%' '$' '€' '£' (in this set's box and corners) are added by
+// withTextCharacters (characters.ts, symbols.ts)
 export const digitsSlim: IconSet = withTextCharacters({
   segmentCount: 16,
   strokeWidth: 6 / 5.5,
@@ -154,4 +155,4 @@ export const digitsSlim: IconSet = withTextCharacters({
   // 9 is exactly 6 turned 180°; 2 → 6 also turns (it is 2 → 9 in the turning frame)
   spins: { 2: { 6: 180 }, 6: { 9: 180, 2: -180 }, 9: { 6: -180 } },
   textLayout: { cellWidth: 9.5, spacing: 4, baselineY: 20, colonDotsY: [8, 16] },
-});
+}, { left: 8, right: 16, top: 4, bottom: 20, corners: 'round' });

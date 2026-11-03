@@ -7,8 +7,9 @@ import { createIconSvg, createStrokedElement } from './svg.ts';
 import type { StyleOptions } from './svg.ts';
 import type { IconSet } from './types.ts';
 
-/** Characters `text()` can show: digits, space, `-` `:` `.` `,` `/` — all of them morph. Anything else is removed. */
-const UNSUPPORTED_CHARACTERS = /[^0-9 :.,\/-]/g;
+/** Characters `text()` can show: digits, space, `-` `:` `.` `,` `/`, `+` `%` `$` `€` `£` — all of them morph. Anything
+ * else is removed. */
+const UNSUPPORTED_CHARACTERS = /[^0-9 :.,\/+%$€£-]/g;
 
 /** Vertical part of the 24×24 grid shown in a cell: y 3…21 holds every digit including its stroke. */
 const CELL_TOP = 3;

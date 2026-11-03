@@ -37,7 +37,8 @@ const EIGHT_RADIUS = 6;
 const SIX_POINTS: Point[] = [[15, 2], [2, 2], [2, 26], [19, 26], [19, 12], [2, 12]];
 const SIX_RADII = [0, SIX_RADIUS, SIX_RADIUS, SIX_RADIUS, SIX_RADIUS, 0];
 
-// '-' '/' '.' ',' ':' are added by withTextCharacters (characters.ts)
+// '-' '/' '.' ',' ':' and the symbols '+' '%' '$' '€' '£' (in this set's box and corners) are added by
+// withTextCharacters (characters.ts, symbols.ts)
 export const digitsSquare: IconSet = withTextCharacters({
   segmentCount: 20,
   strokeWidth: STROKE_WIDTH,
@@ -164,4 +165,4 @@ export const digitsSquare: IconSet = withTextCharacters({
   },
   spins: { 6: { 9: 180 }, 9: { 6: -180 } },
   textLayout: { cellWidth: 13.5, spacing: 4, baselineY: 20, colonDotsY: [8, 16] },
-});
+}, { left: 6.33, right: 17.67, top: 4, bottom: 20, corners: 4 });

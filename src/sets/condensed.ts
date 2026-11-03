@@ -38,7 +38,8 @@ const HOOK_END_Y = 79;
 const SIX_POINTS: Point[] = [[47, 94 - HOOK_END_Y], [47, 3], [3, 3], [3, 91], [47, 91], [47, 47], [3, 47]];
 const SIX_RADII = [0, OUTER_RADIUS, OUTER_RADIUS, OUTER_RADIUS, OUTER_RADIUS, MIDDLE_RADIUS, 0];
 
-// '-' '/' '.' ',' ':' are added by withTextCharacters (characters.ts)
+// '-' '/' '.' ',' ':' and the symbols '+' '%' '$' '€' '£' (in this set's box and corners) are added by
+// withTextCharacters (characters.ts, symbols.ts)
 export const digitsCondensed: IconSet = withTextCharacters({
   segmentCount: 20,
   strokeWidth: 6 / PIXELS_PER_UNIT,
@@ -153,4 +154,4 @@ export const digitsCondensed: IconSet = withTextCharacters({
   },
   spins: { 6: { 9: 180 }, 9: { 6: -180 } },
   textLayout: { cellWidth: 8, spacing: 3.5, baselineY: 20, colonDotsY: [8, 16] },
-});
+}, { left: 8, right: 16, top: 4, bottom: 20, corners: CORNER_RADIUS / PIXELS_PER_UNIT });
