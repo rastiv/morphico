@@ -6,7 +6,8 @@ dependencies, works in any framework or none.
 
 **[Demo and examples →](https://morphico.rastiv.dev)**
 
-> **Status:** 0.x — the API may still change before 1.0.
+> **Status:** stable (1.x) — breaking changes only come with a new major version
+> ([changelog](CHANGELOG.md)).
 
 ## Quick start
 

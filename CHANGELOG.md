@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 patch = nicer transitions and fixes, minor = new icon sets or options, major = API changes or a changed resting look of an icon.
 
+## 1.0.0
+
+- First stable release: the API of 0.6.0 is now fixed. From here on, breaking changes only come with a new major
+  version.
+- Demo and examples: https://morphico.rastiv.dev (linked from the README and the package's homepage).
+
 ## 0.6.0
 
 - Digit sets: new symbols `+` `%` `$` `€` `£` for prices and discounts (`text(el, '€39.99', …)`, `'-20%'`), drawn in
