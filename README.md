@@ -4,6 +4,8 @@ Morphing SVG for the web: icons, digits, cut-outs and faces that smoothly change
 turns into pause, 4 turns into 5, a star-shaped photo turns into a heart, a smile turns into a frown. Small, no
 dependencies, works in any framework or none.
 
+**[Demo and examples →](https://morphico.rastiv.dev)**
+
 > **Status:** 0.x — the API may still change before 1.0.
 
 ## Quick start
