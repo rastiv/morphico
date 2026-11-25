@@ -1,6 +1,6 @@
 // The public types of clip(), and the check of the outline option.
 import type { MorphOptions, MorphResult } from '../morph.ts';
-import type { ClipShape } from '../sets/shapes.ts';
+import type { ClipShape } from './shapes.ts';
 
 /** A length: a number = % (of the element's width for x and size, of its height for y), or `'40%'` / `'120px'`. */
 export type Length = number | string;

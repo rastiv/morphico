@@ -6,8 +6,8 @@ import type { Clip, ClipChanges, ClipOutline, Length } from '../src/clip/options
 import type { EasingName } from '../src/morph.ts';
 import { toPathData } from '../src/geometry/path-data.ts';
 import { defaultBreakpoints, layoutStrokes } from '../src/geometry/stroke-layout.ts';
-import { clipShapeNames, lucideShapeOutlines } from '../src/sets/shapes.ts';
-import type { ClipShape } from '../src/sets/shapes.ts';
+import { clipShapeNames, lucideShapeOutlines } from '../src/clip/shapes.ts';
+import type { ClipShape } from '../src/clip/shapes.ts';
 
 type Unit = '%' | 'px';
 type PlacementKey = 'x' | 'y' | 'size';
