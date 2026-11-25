@@ -1,13 +1,14 @@
 // Face tab of the preview page: the library's face() on one element. The expression buttons show small pictures of
-// every expression (drawn straight from sets/faces.ts); the controls call to() / blink(), and options that face() only
+// every expression (drawn straight from src/face/); the controls call to() / blink(), and options that face() only
 // takes when it's created (pupil color, blinking by itself) rebuild it. The Look panel makes the pupils follow the
 // pointer (look()) and, optionally, the expression change with the pointer's direction. The Code panel shows the matching
 // calls.
-import { face } from '../src/face.ts';
-import type { Face } from '../src/face.ts';
+import { face } from '../src/face/face.ts';
+import type { Face } from '../src/face/face.ts';
 import type { EasingName } from '../src/morph.ts';
-import { faceExpressionNames, faceExpressionPieces, facePaths } from '../src/sets/faces.ts';
-import type { FaceExpression } from '../src/sets/faces.ts';
+import { faceExpressionNames, faceExpressionPieces } from '../src/face/expressions.ts';
+import { facePaths } from '../src/face/paths.ts';
+import type { FaceExpression } from '../src/face/expressions.ts';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 const FIRST_EXPRESSION: FaceExpression = 'normal';
