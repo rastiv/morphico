@@ -124,7 +124,9 @@ export const digitsRound: IconSet = withTextCharacters({
       9: { startSegment: 6, reversed: true },
     },
     1: {
-      4: { breakpoints: [0, 1, 1.0625, 1.125, 1.1875, 1.2708, 1.2708, 1.6875, 1.6875, 1.6875, 1.6875, 1.6875, 2] },
+      // as in the slim set: the stem stays the stem, the flag folds out into the 4's crossbar + diagonal
+      // (7 segments on the flag, 5 on the stem — the 4's own split is 3 + 4 + 5)
+      4: { breakpoints: [0, 1 / 7, 2 / 7, 3 / 7, 4 / 7, 5 / 7, 6 / 7, 1, 1.2, 1.4, 1.6, 1.8, 2] },
       // flag curls into the top loop, stem rounds into the bottom loop (optimizer fit)
       8: { breakpoints: [0, 0, 0, 1, 1.3125, 1.4583, 1.5208, 1.8333, 1.8333, 1.8333, 1.8333, 1.8333, 2] },
       // fewer segments for the 9's circle, more for its tail; the circle unrolls into flag + stem top (optimizer fit)
@@ -147,8 +149,6 @@ export const digitsRound: IconSet = withTextCharacters({
       9: { breakpoints: [0, 0, 0, 0, 0.0208, 0.2708, 0.4792, 0.6458, 1, 2, 2.3542, 2.6667, 3] },
     },
     4: {
-      // drawn from the stem's bottom: the 1's stem stays a stem, its flag folds out into diagonal + crossbar
-      1: { breakpoints: [0, 0.4375, 0.4375, 0.4375, 0.4375, 1, 1.6042, 1.6042, 1.7292, 1.8333, 1.8958, 2, 3], reversed: true },
       2: { breakpoints: [0, 1, 2, 2, 2.1458, 2.3958, 2.5208, 2.6667, 2.8125, 2.9375, 2.9375, 2.9375, 3] },
       3: { breakpoints: [0, 1, 2, 2.0208, 2.2708, 2.3958, 2.3958, 2.4792, 2.6875, 2.9167, 2.9167, 2.9167, 3] },
       // crossbar → top bar (moves up), diagonal → down-stroke, stem → bowl (optimizer fit)
