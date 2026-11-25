@@ -3,11 +3,15 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 patch = nicer transitions and fixes, minor = new icon sets or options, major = API changes or a changed resting look of an icon.
 
-## Unreleased
+## 1.1.0
 
 - `face()`: new `look()` — the pupils turn towards a point on the page (`look(event.clientX, event.clientY)`), towards
   an element (`look(emailInput)`), or back to the expression's own (`look()`). It stays on through `to()` and
   `blink()`, and the pupils follow smoothly, so following the pointer is a single `pointermove` listener.
+- Round digits: 1 ↔ 4 morphs like the slim set — the stem stays, the 1's flag folds out into the 4's crossbar and
+  diagonal (before, the stem bent sideways half-way).
+- Inside: the source is split into smaller files, one job each. Nothing changes for users: same API, same import
+  paths, every shape and morph frame identical.
 
 ## 1.0.0
 
