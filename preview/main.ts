@@ -5,10 +5,10 @@
 import './clip.ts';
 import './face.ts';
 import { animate, easings } from '../src/engine.ts';
-import {
-  defaultShapes, drawnPieces, interpolate, pieceLengthOf, rotateAroundCenter, scaleAroundCenter, shapeForPair, splitPieces,
-  toPathData, toSegments, withDrawnPieces,
-} from '../src/geometry.ts';
+import { drawnPieces, withDrawnPieces } from '../src/geometry/draw.ts';
+import { defaultShapes, pieceLengthOf, shapeForPair } from '../src/geometry/pairs.ts';
+import { toPathData } from '../src/geometry/path-data.ts';
+import { interpolate, rotateAroundCenter, scaleAroundCenter, splitPieces, toSegments } from '../src/geometry/path-numbers.ts';
 import { iconSets } from '../src/all.ts';
 import type { IconSetName } from '../src/all.ts';
 import { resolveIconSet } from '../src/roundness.ts';

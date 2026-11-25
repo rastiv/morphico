@@ -7,7 +7,7 @@
 //   piece 3: bottom line   | "/" of the ✕           | lower half of the arrowhead
 // Lucide draws the arrowhead as one bent line; two lines meeting with round ends look the same.
 // Every line runs from left to right, so lines move without turning over.
-import { line } from '../geometry.ts';
+import { line } from '../geometry/strokes.ts';
 import type { IconSet, PieceSet, Point, Stroke } from '../types.ts';
 import { fromLucide, LUCIDE_STROKE_WIDTH } from './lucide.ts';
 

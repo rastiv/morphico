@@ -2,7 +2,7 @@
 // images: drawn from each set's own box (where its digits stand) and corner style, so they match the digits — round
 // sets (round, slim, handwritten) get elliptical bowls like their 0, 3 and 8; boxy sets (square, condensed) rounded
 // corners with the set's radius. Every symbol is at most three pieces: one continuous line each (see characters.ts).
-import { cubic, line, roundedPolyline } from '../geometry.ts';
+import { cubic, line, roundedPolyline } from '../geometry/strokes.ts';
 import type { PairLayout, Point, Stroke } from '../types.ts';
 
 /** Where a set's digits stand (middle of the line) and how its corners look. */

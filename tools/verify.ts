@@ -1,7 +1,8 @@
 // Verifies a set's pair layouts: number count, continuity, shape deviation from the default layout
 // (≤ ~0.12 is sampling noise, more means the picture changed) and morph cost before → after.
 // Usage: node tools/verify.ts <set> [states...]   (default: all pairs)
-import { defaultShapes, pieceLengthOf, piecesOf, rotateAroundCenter, shapeForPair, splitPieces, toSegments } from '../src/geometry.ts';
+import { defaultShapes, pieceLengthOf, piecesOf, shapeForPair } from '../src/geometry/pairs.ts';
+import { rotateAroundCenter, splitPieces, toSegments } from '../src/geometry/path-numbers.ts';
 import type { PathNumbers, Point } from '../src/types.ts';
 import { loadIconSet, morphCost } from './shared.ts';
 

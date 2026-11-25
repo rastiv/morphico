@@ -8,7 +8,7 @@
 //  - 3 and 5 share the same right-side bowls (corner radius 5 px); 8 = two stacked rounded rectangles sharing
 //    the middle bar; 9 = 6 turned 180° around 12,12
 //  - T-junctions (1's foot, 3's middle bar, 4's crossbar) are drawn out and back over themselves
-import { roundedPolyline } from '../geometry.ts';
+import { roundedPolyline } from '../geometry/strokes.ts';
 import { withTextCharacters } from './characters.ts';
 import type { IconSet, Point } from '../types.ts';
 

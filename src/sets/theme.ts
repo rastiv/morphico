@@ -7,7 +7,7 @@
 //     vanish (erased towards their outer tip, PairLayout.draw — the user's sketch) within the first 60 % of the
 //     morph; dark → light: they fly back in during the last 60 %. At rest the moon's ray pieces are tiny lines hidden
 //     on its outline.
-import { arc, cubic, line } from '../geometry.ts';
+import { arc, cubic, line } from '../geometry/strokes.ts';
 import type { IconSet, PieceSet, Stroke } from '../types.ts';
 import { fromLucide, LUCIDE_STROKE_WIDTH, lucideLength } from './lucide.ts';
 

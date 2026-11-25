@@ -1,10 +1,10 @@
 // One SVG <path> that morphs between the states of an icon set. Shared by icon() and every text() cell.
 import { animate, easings } from './engine.ts';
 import type { Easing } from './engine.ts';
-import {
-  defaultShapes, drawnPieces, interpolate, pieceLengthOf, rotateAroundCenter, scaleAroundCenter, shapeForPair, toPathData,
-  withDrawnPieces,
-} from './geometry.ts';
+import { drawnPieces, withDrawnPieces } from './geometry/draw.ts';
+import { defaultShapes, pieceLengthOf, shapeForPair } from './geometry/pairs.ts';
+import { toPathData } from './geometry/path-data.ts';
+import { interpolate, rotateAroundCenter, scaleAroundCenter } from './geometry/path-numbers.ts';
 import type { IconSet, PathNumbers } from './types.ts';
 
 export type EasingName = keyof typeof easings;

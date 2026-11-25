@@ -6,7 +6,7 @@
 //     corner where the big check leaves the box — both ends of the gap pull back to the gap's edges.
 //   piece 2, the check (check-mark.ts, shared with "radio"): drawn in like a pen from unchecked (the user's sketch).
 //     (Rejected: a box copy folding into the check — tangled; the check sliding in from the left edge — user: bad.)
-import { line, roundedPolygon } from '../geometry.ts';
+import { line, roundedPolygon } from '../geometry/strokes.ts';
 import type { IconSet, LineStroke, Point, Stroke } from '../types.ts';
 import { checkMarkPiece } from './check-mark.ts';
 import { fromLucide, LUCIDE_STROKE_WIDTH, lucideLength } from './lucide.ts';

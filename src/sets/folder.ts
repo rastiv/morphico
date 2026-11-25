@@ -6,7 +6,7 @@
 // closed ↔ open: the closed folder is traced the open folder's way ("folder-like-open", same picture) — starting at
 // its top edge, which it runs along twice: the first pass drops and tilts into the flap's top edge, the second stays
 // as the back panel's top edge.
-import { arc, line, reversedStroke } from '../geometry.ts';
+import { arc, line, reversedStroke } from '../geometry/strokes.ts';
 import type { IconSet, Stroke } from '../types.ts';
 import { fromLucide, LUCIDE_STROKE_WIDTH, lucideLength } from './lucide.ts';
 

@@ -1,10 +1,11 @@
 // Clip tab of the preview page: the library's clip() on two elements, an <img> and a <div> (any element can be cut
 // out). The shape buttons show the Lucide icons the shapes come from; the controls call to() (animated: shapes,
 // presets) or set() (jump: sliders), and the Code panel shows the matching clip() options.
-import { clip } from '../src/clip.ts';
-import type { Clip, ClipChanges, ClipOutline, Length } from '../src/clip.ts';
+import { clip } from '../src/clip/clip.ts';
+import type { Clip, ClipChanges, ClipOutline, Length } from '../src/clip/options.ts';
 import type { EasingName } from '../src/morph.ts';
-import { defaultBreakpoints, layoutStrokes, toPathData } from '../src/geometry.ts';
+import { toPathData } from '../src/geometry/path-data.ts';
+import { defaultBreakpoints, layoutStrokes } from '../src/geometry/stroke-layout.ts';
 import { clipShapeNames, lucideShapeOutlines } from '../src/sets/shapes.ts';
 import type { ClipShape } from '../src/sets/shapes.ts';
 

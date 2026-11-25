@@ -2,7 +2,8 @@
 // by `node tools/import-lucide.ts <name>`; tag without its dot, club without its stem. The states are the Lucide outlines made comparable for
 // morphing: clockwise, starting where the outline crosses the vertical middle at the top, scaled evenly to fill the
 // 24×24 box and centred (computed on first use, not at import). Roundness 1 = Lucide's own corners … 0 = sharp.
-import { arc, cubic, ellipse, line, reversedStroke, strokePiece } from '../geometry.ts';
+import { strokePiece } from '../geometry/stroke-layout.ts';
+import { arc, cubic, ellipse, line, reversedStroke } from '../geometry/strokes.ts';
 import type { IconSet, Point, Stroke } from '../types.ts';
 
 const DEGREE = Math.PI / 180;

@@ -39,7 +39,9 @@
 //     box's left side): piece 1 is laid out without it — together they look the same.
 //   showers otherwise morphs like partly-cloudy (sunny: the cloud crawls in, the circle opens; cloudy: the cloud
 //     shrinks and opens, the sun is drawn in), plus the rain: drawn down, or (from sunny) riding in with the cloud.
-import { arc, defaultBreakpoints, line, piecesOf, reversedStroke } from '../geometry.ts';
+import { piecesOf } from '../geometry/pairs.ts';
+import { defaultBreakpoints } from '../geometry/stroke-layout.ts';
+import { arc, line, reversedStroke } from '../geometry/strokes.ts';
 import type { IconSet, LineStroke, PairLayout, PieceSet, Point, Stroke } from '../types.ts';
 import { fromLucide, LUCIDE_STROKE_WIDTH, lucideLength } from './lucide.ts';
 

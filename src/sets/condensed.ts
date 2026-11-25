@@ -9,7 +9,7 @@
 //  - 0 = stadium; 8 = two stacked rounded rectangles sharing the middle bar; 9 = 6 turned 180° around 12,12;
 //    the 5 ends with the same small upturn as the 9
 //  - T-junctions (4's right stem) are drawn out and back over themselves
-import { roundedPolyline } from '../geometry.ts';
+import { roundedPolyline } from '../geometry/strokes.ts';
 import { withTextCharacters } from './characters.ts';
 import type { IconSet, Point } from '../types.ts';
 

@@ -8,7 +8,7 @@
 //  - one big circle radius (2, 3, 6, 8, 9) and one small one (top of 3 and 8); 5 has its own, larger bowl
 //  - 3 is drawn on exactly the two circles of 8 (they touch at 12, 11.2)
 //  - 9 is exactly 6 turned 180° around 12,12 → 6 ↔ 9 morphs as a pure spin
-import { arc, ellipse, line, pointOnCircle } from '../geometry.ts';
+import { arc, ellipse, line, pointOnCircle } from '../geometry/strokes.ts';
 import { withTextCharacters } from './characters.ts';
 import type { IconSet, Point } from '../types.ts';
 

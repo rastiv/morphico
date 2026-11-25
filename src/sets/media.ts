@@ -6,7 +6,7 @@
 // exactly on the first, so it doesn't show — during a morph to pause the two copies separate into the bars).
 // Every shape runs clockwise from its top left, like Lucide's. Coordinates below are Lucide's; fromLucide /
 // lucideLength scale them into our icon box (more margin, like the digits — see lucide.ts).
-import { reversedStroke, roundedPolygon } from '../geometry.ts';
+import { reversedStroke, roundedPolygon } from '../geometry/strokes.ts';
 import type { IconSet, Point } from '../types.ts';
 import { fromLucide, LUCIDE_STROKE_WIDTH, lucideLength } from './lucide.ts';
 
