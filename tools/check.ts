@@ -5,9 +5,9 @@
 // --tracing=<name>: also lays out the second state along alternativeStrokes[name] (fitted against A as is / reversed).
 // --piece=<index>: sets with several pieces are tuned one piece at a time (default 0 = the set's own strokes;
 //   1 = morePieces[0], …); the printed entries go into that piece's pairLayouts.
-import {
-  defaultShapes, layoutStrokes, pieceLengthOf, piecesOf, reorderSegments, segmentCountOf, splitPieces, strokePiece,
-} from '../src/geometry.ts';
+import { defaultShapes, pieceLengthOf, piecesOf } from '../src/geometry/pairs.ts';
+import { reorderSegments, segmentCountOf, splitPieces } from '../src/geometry/path-numbers.ts';
+import { layoutStrokes, strokePiece } from '../src/geometry/stroke-layout.ts';
 import type { PairLayout, PathNumbers, Stroke } from '../src/types.ts';
 import { loadIconSet, morphCost } from './shared.ts';
 

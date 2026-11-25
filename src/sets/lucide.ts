@@ -1,7 +1,7 @@
 // Shared by every Lucide-based icon set: Lucide draws in y 3…21 (18 units) with a 2-unit line; our icons get the
 // same room as the digits (16 units, y 4…20; user's choice 2026-10-26), so every icon is scaled around the centre
 // 12,12 — line width included, so each icon looks exactly like Lucide's, only with more margin in its box.
-import { arc, cubic, line } from '../geometry.ts';
+import { arc, cubic, line } from '../geometry/strokes.ts';
 import type { Point, Stroke } from '../types.ts';
 
 export const LUCIDE_SCALE = 16 / 18;

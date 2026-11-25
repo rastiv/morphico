@@ -8,7 +8,7 @@
 //    6 = arc of TOP + straight left side + a loop (a stadium a bit taller than BOTTOM); 9 = 6 turned 180° around 12,12
 //  - 0 = stadium; the 4 is wider and its top point sits lower (y ≈ 5.2), as in the images (its values nudged to the best pixel match)
 //  - round ends and corners
-import { arc, line, pointOnCircle, roundedPolyline } from '../geometry.ts';
+import { arc, line, pointOnCircle, roundedPolyline } from '../geometry/strokes.ts';
 import { withTextCharacters } from './characters.ts';
 import type { IconSet, Point, Stroke } from '../types.ts';
 

@@ -8,7 +8,8 @@
 // lower ring: every other state rests it as a single point in the middle (never drawn), so it grows out of there
 // instead of a whole copy shrinking into it. Symbols morph with the default pairing, except the pairs in
 // `symbolPairLayouts`.
-import { defaultBreakpoints, line } from '../geometry.ts';
+import { defaultBreakpoints } from '../geometry/stroke-layout.ts';
+import { line } from '../geometry/strokes.ts';
 import { symbolPairLayouts, symbolStrokes } from './symbols.ts';
 import type { SymbolStyle } from './symbols.ts';
 import type { IconSet, PairLayout, Stroke, TextLayout } from '../types.ts';

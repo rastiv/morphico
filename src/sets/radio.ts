@@ -6,7 +6,7 @@
 //     checked-big opens a gap at the top right (from 17,3.335 clockwise round to 21.801,10 is the open arc) where
 //     the big check leaves the circle — both ends of the gap pull back to the gap's edges.
 //   piece 2, the check (check-mark.ts, shared with "checkbox"): drawn in like a pen from unchecked.
-import { arc } from '../geometry.ts';
+import { arc } from '../geometry/strokes.ts';
 import type { IconSet } from '../types.ts';
 import { checkMarkPiece } from './check-mark.ts';
 import { fromLucide, LUCIDE_STROKE_WIDTH, lucideLength } from './lucide.ts';

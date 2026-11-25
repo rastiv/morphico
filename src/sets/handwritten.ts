@@ -8,7 +8,7 @@
 // the centre line — the marker stroke varies a little, so the pixel match is ~8–17 %).
 //  - every digit is one stroke of 3–7 free cubic curves; round ends and corners
 //  - the 4 is drawn out and back over its crossbar end and right stem (one continuous stroke)
-import { cubic } from '../geometry.ts';
+import { cubic } from '../geometry/strokes.ts';
 import { withTextCharacters } from './characters.ts';
 import type { IconSet } from '../types.ts';
 

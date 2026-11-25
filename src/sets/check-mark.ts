@@ -2,7 +2,7 @@
 // versions draw the same checks; ISC, see LICENSE-lucide). Coordinates are Lucide's, scaled by fromLucide.
 // Drawn left to right, short stroke then long stroke. unchecked has no check: the check is drawn in like a pen
 // writing it — down the short stroke, up the long one (the user's sketch; PairLayout.draw) — and erased back.
-import { line } from '../geometry.ts';
+import { line } from '../geometry/strokes.ts';
 import type { PieceSet, Point, Stroke } from '../types.ts';
 import { fromLucide } from './lucide.ts';
 
