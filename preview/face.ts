@@ -1,6 +1,8 @@
 // Face tab of the preview page: the library's face() on one element. The expression buttons show small pictures of
 // every expression (drawn straight from sets/faces.ts); the controls call to() / blink(), and options that face() only
-// takes when it's created (pupil color, blinking by itself) rebuild it. The Code panel shows the matching calls.
+// takes when it's created (pupil color, blinking by itself) rebuild it. The Look panel makes the pupils follow the
+// pointer (look()) and, optionally, the expression change with the pointer's direction. The Code panel shows the matching
+// calls.
 import { face } from '../src/face.ts';
 import type { Face } from '../src/face.ts';
 import type { EasingName } from '../src/morph.ts';
@@ -23,6 +25,8 @@ const easingSelect = byId<HTMLSelectElement>('face-easing');
 const autoBlinkCheckbox = byId<HTMLInputElement>('face-auto-blink');
 const featuresColorInput = byId<HTMLInputElement>('face-features-color');
 const pupilsColorInput = byId<HTMLInputElement>('face-pupils-color');
+const followCheckbox = byId<HTMLInputElement>('face-follow');
+const byDirectionCheckbox = byId<HTMLInputElement>('face-by-direction');
 const codeOutput = byId<HTMLPreElement>('face-code');
 
 // ---- the face ----
@@ -47,6 +51,16 @@ const showCode = (): void => {
     `// brows, eyes and mouth: the element's CSS color (${featuresColorInput.value})`,
     `robot.to('${expression}', { duration: ${duration}, easing: '${easing}' });`,
     `robot.blink();`,
+    ...(followCheckbox.checked ? [
+      `document.addEventListener('pointermove', (event) => {`,
+      `  robot.look(event.clientX, event.clientY);`,
+      ...(byDirectionCheckbox.checked ? [
+        `  // 12 expressions, one per 30° around the face (from the top, clockwise)`,
+        `  const sector = Math.floor(angleFromTop(event) / 30);`,
+        `  if (sector !== shownSector) robot.to(expressionsAround[shownSector = sector]);`,
+      ] : []),
+      `});`,
+    ] : []),
   ].join('\n');
 };
 
@@ -142,6 +156,42 @@ pupilsColorInput.oninput = () => {
   applyColors();
   rebuildRobot();
 };
+
+// ---- looking (look() follows the pointer; optionally the expression follows its direction) ----
+
+/** One expression per 30° around the face, from the top, clockwise. */
+const EXPRESSIONS_AROUND: readonly FaceExpression[] = [
+  'normal', 'tired', 'angry', 'surprised', 'smiling', 'sad',
+  'curious', 'suspicious', 'wonder', 'worried', 'excited', 'bored',
+];
+let shownSector = -1;
+
+document.addEventListener('pointermove', (event) => {
+  if (faceView.hidden || !followCheckbox.checked) return;
+  robot.look(event.clientX, event.clientY);
+  if (!byDirectionCheckbox.checked) return;
+  const faceBox = faceTarget.getBoundingClientRect();
+  const offsetX = event.clientX - (faceBox.left + faceBox.width / 2);
+  const offsetY = event.clientY - (faceBox.top + faceBox.height / 2);
+  // close to the middle the direction jumps around: keep the expression
+  if (Math.hypot(offsetX, offsetY) < faceBox.width / 4) return;
+  const angleFromTop = (Math.atan2(offsetX, -offsetY) * 180 / Math.PI + 360) % 360;
+  const sector = Math.floor(angleFromTop / 30);
+  if (sector === shownSector) return;
+  shownSector = sector;
+  void morphTo(EXPRESSIONS_AROUND[sector]);
+});
+
+followCheckbox.onchange = () => {
+  byDirectionCheckbox.disabled = !followCheckbox.checked;
+  if (!followCheckbox.checked) robot.look();
+  showCode();
+};
+byDirectionCheckbox.onchange = () => {
+  shownSector = -1;
+  showCode();
+};
+byDirectionCheckbox.disabled = true;
 
 applyColors();
 createRobot(FIRST_EXPRESSION);

@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 patch = nicer transitions and fixes, minor = new icon sets or options, major = API changes or a changed resting look of an icon.
 
+## Unreleased
+
+- `face()`: new `look()` — the pupils turn towards a point on the page (`look(event.clientX, event.clientY)`), towards
+  an element (`look(emailInput)`), or back to the expression's own (`look()`). It stays on through `to()` and
+  `blink()`, and the pupils follow smoothly, so following the pointer is a single `pointermove` listener.
+
 ## 1.0.0
 
 - First stable release: the API of 0.6.0 is now fixed. From here on, breaking changes only come with a new major

@@ -220,8 +220,20 @@ const robot = face(document.querySelector('#robot'), 'normal');
 await robot.to('smiling');                    // morph
 robot.to('angry', { duration: 300 });
 robot.blink();                                // close and open the eyes once, on top of any expression
+robot.look(emailInput);                       // the pupils turn towards an element…
+robot.look(event.clientX, event.clientY);     // …or a point on the page (viewport coordinates)
+robot.look();                                 // back to where the expression has them
 robot.destroy();                              // removes the face, stops blinking
 ```
+
+Looking stays on while the face changes expression and blinks, and the pupils follow smoothly — so following the
+pointer is one line:
+
+```ts
+document.addEventListener('pointermove', (event) => robot.look(event.clientX, event.clientY));
+```
+
+The farther the point is from the face, the farther the pupils turn (they always stay inside the eyes).
 
 Expressions: `normal`, `smiling`, `pleading`, `wonder`, `focused`, `fright`, `angry`, `asleep`, `sad`,
 `surprised`, `laughing`, `tired`, `wink-left`, `wink-right`, `suspicious`, `confused`, `smug`, `irritated`,
