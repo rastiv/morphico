@@ -6,7 +6,7 @@
 // middle lines at x 3 / 47 and y 3 (top) / 47 (middle) / 91 (bottom). 5.5 image px = 1 grid unit, so the digits
 // span x 8…16, y 4…20.
 //  - straight strokes with rounded corners (roundedPolyline), round ends
-//  - 0 = stadium; 8 = two stacked rounded rectangles sharing the middle bar; 9 = 6 turned 180° around 12,12;
+//  - 0 = a box with the corners of 6, 8, 9 (user, 2026-11-26; the images' 0 is a stadium); 8 = two stacked rounded rectangles sharing the middle bar; 9 = 6 turned 180° around 12,12;
 //    the 5 ends with the same small upturn as the 9
 //  - T-junctions (4's right stem) are drawn out and back over themselves
 import { roundedPolyline } from '../geometry/strokes.ts';
@@ -33,6 +33,11 @@ const THREE_BOWL_RADIUS = 16; // the 3's bowls are rounder
 const THREE_MIDDLE_END_X = 15;
 /** End of the small upturn at the bottom left of 5 and 9 (and of the hook at the top right of 6). */
 const HOOK_END_Y = 79;
+/**
+ * The 0 split like the stadium it was until 2026-11-26 (spread by length there), so the 0 ↔ digit layouts tuned on it
+ * (start segments, the other side's breakpoints) keep working on the box.
+ */
+const ZERO_SPLIT = [0, 1, 2, 2.1458, 2.3333, 2.5, 2.6667, 2.8542, 3, 4, 4.5, 5, 6, 6.1458, 6.3333, 6.5, 6.6667, 6.8542, 7, 8, 9];
 
 // the 6: hook at the top right, over the top, down the left side, round the bottom, up to the middle bar, back left
 const SIX_POINTS: Point[] = [[47, 94 - HOOK_END_Y], [47, 3], [3, 3], [3, 91], [47, 91], [47, 47], [3, 47]];
@@ -46,8 +51,8 @@ export const digitsCondensed: IconSet = withTextCharacters({
   lineCap: 'round',
   lineJoin: 'round',
   strokes: {
-    // stadium, from the top middle counter-clockwise
-    0: drawn(50, [[25, 3], [3, 3], [3, 91], [47, 91], [47, 3], [25, 3]], 22),
+    // a box with the same corners as 6, 8, 9, from the top middle counter-clockwise
+    0: drawn(50, [[25, 3], [3, 3], [3, 91], [47, 91], [47, 3], [25, 3]], CORNER_RADIUS),
     // flag → stem
     1: drawn(17, [[3, 3], [14, 3], [14, 91]], 0),
     // top bar → right side → middle bar → left side → bottom bar
@@ -87,15 +92,17 @@ export const digitsCondensed: IconSet = withTextCharacters({
   // optimizer fits (tools/check.ts) for the pairs the user rated bad / midd
   pairLayouts: {
     0: {
-      1: { startSegment: 5, reversed: true },
-      2: { startSegment: 5, reversed: true },
-      3: { startSegment: 5, reversed: true },
-      4: { breakpoints: [0, 0.6458, 0.6667, 1, 1.2292, 1.4375, 1.4583, 1.4583, 1.4583, 2, 3, 4, 4.5208, 4.5208, 4.5208, 4.5208, 4.75, 5, 5.3125, 5.3125, 6] },
+      1: { breakpoints: ZERO_SPLIT, startSegment: 5, reversed: true },
+      2: { breakpoints: ZERO_SPLIT, startSegment: 5, reversed: true },
+      3: { breakpoints: ZERO_SPLIT, startSegment: 5, reversed: true },
+      4: { breakpoints: [0, 1, 2, 2.1563, 2.3125, 2.4583, 2.4583, 2.4583, 2.4583, 3, 4, 5, 6, 6.5417, 6.5417, 6.5417, 6.6667, 6.8438, 7, 8, 9] },
       // the user's start point (2026-11-26): the 0 opens where the 5's bar starts (its point nearest to it, upper right)
       // and runs left along the bar; the 5 keeps its default layout
-      5: { breakpoints: [0, 1 / 3, 2 / 3, 1, 1.25, 1.5, 1.75, 2, 7 / 3, 8 / 3, 3, 10 / 3, 11 / 3, 4, 4.25, 4.5, 4.75, 5, 5.25, 5.5, 6], startSegment: 19 },
-      7: { startSegment: 5, reversed: true },
-      9: { startSegment: 6, reversed: true },
+      5: { breakpoints: [0, 1, 2, 2.1458, 2.3333, 2.5, 2.6667, 2.8542, 3, 4, 4.5, 5, 6, 6.1458, 6.3333, 6.5, 6.6771, 6.8333, 7, 8, 9], startSegment: 19 },
+      6: { breakpoints: ZERO_SPLIT },
+      7: { breakpoints: ZERO_SPLIT, startSegment: 5, reversed: true },
+      8: { breakpoints: ZERO_SPLIT },
+      9: { breakpoints: ZERO_SPLIT, startSegment: 6, reversed: true },
     },
     1: {
       0: { breakpoints: [0, 0, 0, 0, 0, 0.5, 1, 1.125, 1.25, 1.375, 1.5, 1.625, 1.75, 1.8542, 1.8542, 1.8542, 1.8542, 1.8542, 1.8542, 1.8542, 2] },
