@@ -143,6 +143,8 @@ Icon sets (based on [Lucide](https://lucide.dev)):
 | `search` → `iconsSearch` | `search` (magnifier), `close` (✕) |
 | `view` → `iconsView` | `grid`, `list` |
 | `align` → `iconsAlign` | `left`, `center`, `right`, `justify` |
+| `heart` → `iconsHeart` | `on`, `off` (slashed) |
+| `maximize` → `iconsMaximize` | `maximize`, `minimize` |
 
 ```ts
 import { iconsMedia } from 'morphico/sets/media';

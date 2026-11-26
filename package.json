@@ -129,6 +129,14 @@
     "./sets/align": {
       "types": "./dist/types/sets/align.d.ts",
       "default": "./dist/esm/sets/align.js"
+    },
+    "./sets/heart": {
+      "types": "./dist/types/sets/heart.d.ts",
+      "default": "./dist/esm/sets/heart.js"
+    },
+    "./sets/maximize": {
+      "types": "./dist/types/sets/maximize.d.ts",
+      "default": "./dist/esm/sets/maximize.js"
     }
   },
   "module": "./dist/esm/index.js",

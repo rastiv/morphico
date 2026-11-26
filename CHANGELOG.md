@@ -6,9 +6,10 @@ here), major = API changes or an icon redrawn into a clearly different look.
 
 ## Unreleased
 
-- Five new icon sets (from Lucide): `status` (success, error, warning, info — the sign changes inside the circle),
+- Seven new icon sets (from Lucide): `status` (success, error, warning, info — the sign changes inside the circle),
   `thumbs` (up, down — the hand turns over), `search` (search, close — the lens flattens into the ✕), `view` (grid,
-  list), `align` (left, center, right, justify). Import from `morphico/sets/<name>`.
+  list), `align` (left, center, right, justify), `heart` (on, off), `maximize` (maximize,
+  minimize). Import from `morphico/sets/<name>`.
 
 ## 1.2.0
 

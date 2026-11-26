@@ -28,6 +28,8 @@ import { iconsThumbs } from './sets/thumbs.ts';
 import { iconsSearch } from './sets/search.ts';
 import { iconsView } from './sets/view.ts';
 import { iconsAlign } from './sets/align.ts';
+import { iconsHeart } from './sets/heart.ts';
+import { iconsMaximize } from './sets/maximize.ts';
 import type { IconSet } from './types.ts';
 
 export const iconSets = {
@@ -58,6 +60,8 @@ export const iconSets = {
   search: iconsSearch,
   view: iconsView,
   align: iconsAlign,
+  heart: iconsHeart,
+  maximize: iconsMaximize,
 } satisfies Record<string, IconSet>;
 
 export type IconSetName = keyof typeof iconSets;
