@@ -91,7 +91,9 @@ export const digitsCondensed: IconSet = withTextCharacters({
       2: { startSegment: 5, reversed: true },
       3: { startSegment: 5, reversed: true },
       4: { breakpoints: [0, 0.6458, 0.6667, 1, 1.2292, 1.4375, 1.4583, 1.4583, 1.4583, 2, 3, 4, 4.5208, 4.5208, 4.5208, 4.5208, 4.75, 5, 5.3125, 5.3125, 6] },
-      5: { startSegment: 4, reversed: true },
+      // the user's start point (2026-11-26): the 0 opens where the 5's bar starts (its point nearest to it, upper right)
+      // and runs left along the bar; the 5 keeps its default layout
+      5: { breakpoints: [0, 1 / 3, 2 / 3, 1, 1.25, 1.5, 1.75, 2, 7 / 3, 8 / 3, 3, 10 / 3, 11 / 3, 4, 4.25, 4.5, 4.75, 5, 5.25, 5.5, 6], startSegment: 19 },
       7: { startSegment: 5, reversed: true },
       9: { startSegment: 6, reversed: true },
     },
@@ -117,7 +119,6 @@ export const digitsCondensed: IconSet = withTextCharacters({
     },
     5: {
       8: { breakpoints: [0, 0, 0, 0, 0.25, 0.4375, 1, 1.25, 1.4375, 2, 2.3333, 3, 4, 5, 6, 7, 8, 8, 8, 8, 8] },
-      0: { breakpoints: [0, 0.8125, 0.8125, 0.8125, 0.8125, 1, 2, 3, 3.3958, 3.4375, 4, 4.5, 5, 6, 6.5, 7, 8, 8, 8, 8, 8] },
     },
     6: {
       8: { breakpoints: [0, 1, 1, 1, 1, 1, 2, 3, 3.5417, 3.5417, 3.6458, 4, 5, 6, 7, 8, 9, 9.6667, 10, 10, 10] },
