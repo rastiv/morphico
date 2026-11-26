@@ -109,6 +109,26 @@
     "./sets/battery": {
       "types": "./dist/types/sets/battery.d.ts",
       "default": "./dist/esm/sets/battery.js"
+    },
+    "./sets/status": {
+      "types": "./dist/types/sets/status.d.ts",
+      "default": "./dist/esm/sets/status.js"
+    },
+    "./sets/thumbs": {
+      "types": "./dist/types/sets/thumbs.d.ts",
+      "default": "./dist/esm/sets/thumbs.js"
+    },
+    "./sets/search": {
+      "types": "./dist/types/sets/search.d.ts",
+      "default": "./dist/esm/sets/search.js"
+    },
+    "./sets/view": {
+      "types": "./dist/types/sets/view.d.ts",
+      "default": "./dist/esm/sets/view.js"
+    },
+    "./sets/align": {
+      "types": "./dist/types/sets/align.d.ts",
+      "default": "./dist/esm/sets/align.js"
     }
   },
   "module": "./dist/esm/index.js",

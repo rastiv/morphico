@@ -39,7 +39,7 @@ Public library (MIT, npm + jsDelivr), **written in TypeScript**, of morphing lin
 - `tsconfig.json` (src + preview, DOM, no Node types) · `tools/tsconfig.json` (extends it, Node types) · `tsconfig.build.json` (emit for the build). `npm run typecheck` checks both.
 - `.github/workflows/ci.yml` — on push to `main` and on pull requests: `npm ci` → typecheck → build.
 - `.github/workflows/publish.yml` — on tag `v*`: runs `ci.yml` first, then checks tag = package.json version, `npm publish` (its `prepublishOnly` runs typecheck + build) via npm Trusted Publishing (OIDC). `NPM_TOKEN` secret only for the very first publish, deleted afterwards.
-- `package.json` — `"type": "module"`, exports `.` (dist/esm/index.js), `./all`, `./sets/<name>` for each of the 22 sets (types in dist/types/; internal files like sets/lucide are not exported — a new set needs its line, the build checks), `module` → dist/esm/index.js, `jsdelivr`/`unpkg` → `dist/morphico.js`, `files: ["dist"]`. `dist/` and `.build/` are git-ignored.
+- `package.json` — `"type": "module"`, exports `.` (dist/esm/index.js), `./all`, `./sets/<name>` for each of the 27 sets (types in dist/types/; internal files like sets/lucide are not exported — a new set needs its line, the build checks), `module` → dist/esm/index.js, `jsdelivr`/`unpkg` → `dist/morphico.js`, `files: ["dist"]`. `dist/` and `.build/` are git-ignored.
 
 ## The morphing contract
 Within a set every state's path is `M x y` + **exactly `segmentCount` cubic segments**. Same structure ⇒ any two states interpolate number by number.
@@ -132,6 +132,14 @@ Within a set every state's path is `M x y` + **exactly `segmentCount` cubic segm
 - `copy` (copy, copied): the front page folds along its diagonal into the check (check traced as a loop `check-loop`: TL and BR corners → the check's corner); the back page is erased in the first half.
 - `wifi` (none, low, medium, high): dot fixed; missing arcs rest on the outermost arc (or a point on the dot) → arcs ripple out. Bunches up near the dot at the start of none → high (thick strokes) (user: fine).
 - `battery` (empty, low, medium, full): bars drawn bottom-up, several in one morph staggered (each 2 / (count + 1) of it, starting half that apart).
+
+## Status: icon families, second batch (2026-11-26)
+- The user picked from Claude's list of 9 (1 status, 2 thumbs, 6 search, 7 view, 8 align; not yet: 3 heart / heart-off, 4 star / star-half / star-off, 5 bookmark / -check / -plus, 9 maximize-2 ↔ minimize-2). All Claude's drafts, waiting for the user's check in the preview.
+- `status` (success, error, warning, info): circle fixed (4 segments); piece 2 = check's long stroke / ✕'s "/" / bars, piece 3 = check's short stroke / ✕'s "\" / dots (Lucide's tiny lines); circle-alert turned 180° is info → warning ↔ info pure spin (info's circle `startSegment: 2`, info's bar bottom → top, reversed for success / error).
+- `thumbs` (up, down): Lucide's thumbs-down is thumbs-up turned 180° in the same drawing order → pure spin (16 segments).
+- `search` (search, close): handle on the ✕'s "\" diagonal grows into it; the lens is flattened onto the "/" (`flatten`).
+- `view` (grid, list): left squares shrink into the dots, right squares are flattened onto the top / bottom lines, the middle dot pops in and the middle line is drawn (`draw`); 8 segments.
+- `align` (left, center, right, justify): three one-segment lines, all left → right (Lucide draws most right → left).
 
 ## Status: theme (2026-10-27)
 - Lucide `sun`, `moon` → `light`, `dark`. 9 pieces, 12 segments. Piece 1: sun circle (started at 3.09°, where the moon's outer arc starts) ↔ crescent, even layout by hand: the circle's part under the outer arc → 8 equal segments of it, its top right quarter → 4 (tip, inner curve 2, tip) — flattens and caves in smoothly. (Rejected: check.ts fit — lumpy notch, user: bad; default — drop-shaped bump.) Pieces 2–9: rays drawn from the outer end inwards ↔ nothing, `draw: 0.6`: they fly outwards and vanish in the first 60 % (user's sketch with arrows; retracting into the sun was bad — stubs on the moon). Moon's ray pieces at rest: tiny line on its bottom. **Confirmed by the user (2026-10-27, "great") — leave untouched.**

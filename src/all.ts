@@ -23,6 +23,11 @@ import { iconsChevron } from './sets/chevron.ts';
 import { iconsCopy } from './sets/copy.ts';
 import { iconsWifi } from './sets/wifi.ts';
 import { iconsBattery } from './sets/battery.ts';
+import { iconsStatus } from './sets/status.ts';
+import { iconsThumbs } from './sets/thumbs.ts';
+import { iconsSearch } from './sets/search.ts';
+import { iconsView } from './sets/view.ts';
+import { iconsAlign } from './sets/align.ts';
 import type { IconSet } from './types.ts';
 
 export const iconSets = {
@@ -48,6 +53,11 @@ export const iconSets = {
   copy: iconsCopy,
   wifi: iconsWifi,
   battery: iconsBattery,
+  status: iconsStatus,
+  thumbs: iconsThumbs,
+  search: iconsSearch,
+  view: iconsView,
+  align: iconsAlign,
 } satisfies Record<string, IconSet>;
 
 export type IconSetName = keyof typeof iconSets;

@@ -138,6 +138,11 @@ Icon sets (based on [Lucide](https://lucide.dev)):
 | `copy` → `iconsCopy` | `copy`, `copied` (✓) |
 | `wifi` → `iconsWifi` | `none`, `low`, `medium`, `high` |
 | `battery` → `iconsBattery` | `empty`, `low`, `medium`, `full` |
+| `status` → `iconsStatus` | `success` (✓), `error` (✕), `warning` (!), `info` (i) — in a circle |
+| `thumbs` → `iconsThumbs` | `up`, `down` |
+| `search` → `iconsSearch` | `search` (magnifier), `close` (✕) |
+| `view` → `iconsView` | `grid`, `list` |
+| `align` → `iconsAlign` | `left`, `center`, `right`, `justify` |
 
 ```ts
 import { iconsMedia } from 'morphico/sets/media';
