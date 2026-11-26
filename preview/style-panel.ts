@@ -6,6 +6,7 @@ import { current, hasFixedWidth } from './current.ts';
 import type { StyleChoices } from './current.ts';
 import { elementById, settings } from './page.ts';
 import { applyStageStyle } from './stage.ts';
+import { buildCountdown } from './countdown-line.ts';
 import { buildTextLine } from './text-line.ts';
 
 const PRESET_COLORS = ['#e8e8ea', '#7aa2ff', '#69db7c', '#ffd43b', '#ffa94d', '#ff6b6b', '#f783ac', '#9775fa'];
@@ -73,6 +74,7 @@ export function applyStyle(): void {
 
   applyStageStyle();
   buildTextLine();
+  buildCountdown();
 }
 
 function changeStyle(change: Partial<StyleChoices>): void {

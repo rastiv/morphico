@@ -49,15 +49,16 @@ const player = icon(document.querySelector('#player'), 'play', { set: iconsMedia
 player.to('pause');
 ```
 
-## The four parts
+## The parts
 
-All four work the same way: **create** with `(element, what to show first, options)`, **change** with `to()`,
+They all work the same way: **create** with `(element, what to show first, options)`, **change** with `to()`,
 **remove** with `destroy()`. `to()` returns a promise that resolves when the morph ends.
 
 | | Create | Change |
 | --- | --- | --- |
 | [**icon**](#one-icon-iconelement-init-options) — one icon or digit | `icon(el, 'play', { set: iconsMedia })` | `.to('pause')` |
 | [**text**](#a-line-of-characters-textelement-init-options) — a line of digits, e.g. a clock | `text(el, '04:59', { set: digitsRound })` | `.to('05:00')` |
+| [**countdown**](#a-countdown-countdownelement-until-options) — a text line that counts down | `countdown(el, 300, { set: digitsRound })` | `.pause()`, `.resume()`, `.to(600)` |
 | [**clip**](#a-cut-out-clipelement-init-options) — any element cut out by a shape | `clip(el, 'star')` | `.to('heart')` |
 | [**face**](#a-face-faceelement-init-options) — a face with feelings | `face(el, 'normal')` | `.to('smiling')`, `.blink()` |
 
@@ -166,6 +167,34 @@ price.to('€39.99');        // a promotion: 4 → 3 morphs, the rest stays
   and every cell's width stay the same (`5` ↔ `-`, `.` ↔ `,`); otherwise the line is rebuilt without animation
   (`5` ↔ `:`). Pad counters with spaces to keep them morphing: `counter.to(String(count).padStart(3, ' '))`.
 - Digits sit on the text baseline, and every cell has the same width, so clocks don't jiggle.
+
+### A countdown: `countdown(element, until, options)`
+
+A `text()` line that counts down by itself — every changed digit morphs.
+
+```ts
+import { countdown } from 'morphico';
+import { digitsRound } from 'morphico/sets/round';
+
+// to a moment: a Date or a date string
+const sale = countdown(document.querySelector('#sale'), new Date('2026-12-31T00:00'), { set: digitsRound });
+
+// for a number of seconds: a timer
+const timer = countdown(document.querySelector('#timer'), 300, {
+  set: digitsRound,
+  onEnd: () => alert('Time is up'),            // once, at 0
+});
+timer.pause();                                 // stops, the time shown stays
+timer.resume();                                // counts on from there
+timer.to(600);                                 // starts again: 10:00
+timer.destroy();
+```
+
+- The format is chosen once, from the time left at the start: `mm:ss` (under an hour), `hh:mm:ss` (under a day),
+  `d:hh:mm:ss` (days) — so the line never changes width while it counts. Choose it yourself with
+  `format: 'mm:ss' | 'hh:mm:ss' | 'd:hh:mm:ss'`.
+- A moment keeps its moment through a pause: after `resume()` it shows the real time left.
+- Takes every `text()` option (`size`, `cellWidth`, `spacing`, style, `duration` / `easing` of the digit morphs).
 
 ## A cut-out: `clip(element, init, options)`
 

@@ -17,6 +17,7 @@ const clipView = elementById('clip-view');
 const faceView = elementById('face-view');
 const setButtons = elementById('set-buttons');
 const textPreview = elementById('text-preview');
+const countdownPreview = elementById('countdown-preview');
 const pathOutput = elementById<HTMLPreElement>('path-output');
 
 /** (Re)builds everything that depends on the set and its corner radius. */
@@ -69,6 +70,7 @@ export function selectTab(nextTab: Tab): void {
     return button;
   }));
   textPreview.hidden = nextTab !== 'digits';
+  countdownPreview.hidden = nextTab !== 'digits';
   if (nextTab !== 'digits') setLiveClock(false);
   const remembered = settings.read(`set.${nextTab}`) as IconSetName | null;
   selectIconSet(remembered && setsOfTab(nextTab).includes(remembered) ? remembered : DEFAULT_SETS[nextTab]);
