@@ -4,6 +4,11 @@ All notable changes to this project are documented here. Versions follow [Semant
 patch = nicer transitions and fixes, minor = new icon sets or options (and small corrections to a drawing, named
 here), major = API changes or an icon redrawn into a clearly different look.
 
+## Unreleased
+
+- `clip()`: six new shapes — `arrow` (turn it with `rotation` to point anywhere), `cross`, `zap`, `flame`, `crown`,
+  `gem`. 30 shapes now.
+
 ## 1.3.0
 
 - Seven new icon sets (from Lucide): `status` (success, error, warning, info — the sign changes inside the circle),
