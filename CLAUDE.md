@@ -203,6 +203,7 @@ Within a set every state's path is `M x y` + **exactly `segmentCount` cubic segm
 - Trusted Publisher on npmjs.com: GitHub Actions, `rastiv/morphico`, `publish.yml`, "Allow npm publish" ticked (direct publish, no staging approval). Nothing to renew (no stored secret; validated connections don't expire). It breaks only if the repo is renamed/moved or `publish.yml` is renamed → then update the Trusted Publisher on npmjs.com to match.
 - **How to release:** bump `version` in package.json (`npm version X.Y.Z --no-git-tag-version`), add a CHANGELOG entry, commit + push, wait for CI, then `git tag -a vX.Y.Z -m ...` + `git push origin vX.Y.Z`. npm can take ~2 min after the Publish workflow succeeds before the version shows up (0.1.0 did) — wait, don't debug. jsDelivr may cache a "not found" if checked before publish → `https://purge.jsdelivr.net/npm/morphico@X.Y.Z/<file>`.
 - The user is new to CI/CD and npm security: go one step at a time, explain before acting.
+- **1.4.0 released 2026-11-26** (clip(): six new shapes — arrow, cross, zap, flame, crown, gem; sharp heart top at roundness 0).
 - **1.3.0 released 2026-11-26** (seven icon sets: status, thumbs, search, view, align, heart, maximize).
 - **1.2.0 released 2026-11-26** (countdown(); 0 ↔ 5 in all digit sets; condensed 0 with box corners — minor by the refined semver rule).
 - **1.1.0 released 2026-11-26** (face().look(), round 1 ↔ 4 like slim, source split into one-job files). Releases go: branch `release/X.Y.Z` (version + CHANGELOG) → PR → merge → tag.
