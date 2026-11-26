@@ -99,7 +99,9 @@ export const digitsCondensed: IconSet = withTextCharacters({
       // the user's start point (2026-11-26): the 0 opens where the 5's bar starts (its point nearest to it, upper right)
       // and runs left along the bar; the 5 keeps its default layout
       5: { breakpoints: [0, 1, 2, 2.1458, 2.3333, 2.5, 2.6667, 2.8542, 3, 4, 4.5, 5, 6, 6.1458, 6.3333, 6.5, 6.6771, 6.8333, 7, 8, 9], startSegment: 19 },
-      6: { breakpoints: ZERO_SPLIT },
+      // 0 → 6 is 0 → 9 turned 180° (the 9 is the 6 turned, the 0 looks the same turned): it opens on the right, a bit
+      // above the middle (the user's point, 2026-11-26)
+      6: { breakpoints: ZERO_SPLIT, startSegment: 6, reversed: true, rotation: 180 },
       7: { breakpoints: ZERO_SPLIT, startSegment: 5, reversed: true },
       8: { breakpoints: ZERO_SPLIT },
       9: { breakpoints: ZERO_SPLIT, startSegment: 6, reversed: true },
@@ -128,6 +130,8 @@ export const digitsCondensed: IconSet = withTextCharacters({
       8: { breakpoints: [0, 0, 0, 0, 0.25, 0.4375, 1, 1.25, 1.4375, 2, 2.3333, 3, 4, 5, 6, 7, 8, 8, 8, 8, 8] },
     },
     6: {
+      // the 9's layout for the 0 turned onto the 6 (its strokes in reverse order, drawn the other way)
+      0: { breakpoints: [0, 0, 0, 1, 1.5, 2, 3, 3.1458, 3.3333, 3.5, 3.6667, 3.8542, 4, 5, 5.5, 6, 7, 7.5, 8, 9, 10], reversed: true },
       8: { breakpoints: [0, 1, 1, 1, 1, 1, 2, 3, 3.5417, 3.5417, 3.6458, 4, 5, 6, 7, 8, 9, 9.6667, 10, 10, 10] },
       4: { breakpoints: [0, 1, 2, 3, 4, 5, 6, 7, 8, 8.7292, 8.7292, 8.7292, 8.7292, 8.7292, 8.7292, 8.7292, 8.7292, 8.7292, 8.7292, 9, 10] },
       2: { breakpoints: [0, 1, 1, 1, 1, 1, 2, 3, 3.5833, 3.6458, 4, 4.5, 5, 5.5, 6, 6.125, 6.125, 7, 8, 9, 10] },
