@@ -19,6 +19,8 @@ const faceView = byId<HTMLDivElement>('face-view');
 const faceTarget = byId<HTMLDivElement>('face-target');
 const expressionButtons = byId<HTMLDivElement>('face-buttons');
 const blinkButton = byId<HTMLButtonElement>('face-blink');
+const nodButton = byId<HTMLButtonElement>('face-nod');
+const shakeButton = byId<HTMLButtonElement>('face-shake');
 const playButton = byId<HTMLButtonElement>('face-play');
 const durationInput = byId<HTMLInputElement>('face-duration');
 const durationOutput = byId<HTMLOutputElement>('face-duration-output');
@@ -52,6 +54,7 @@ const showCode = (): void => {
     `// brows, eyes and mouth: the element's CSS color (${featuresColorInput.value})`,
     `robot.to('${expression}', { duration: ${duration}, easing: '${easing}' });`,
     `robot.blink();`,
+    `robot.react('nod');   // yes · robot.react('shake'): no`,
     ...(followCheckbox.checked ? [
       `document.addEventListener('pointermove', (event) => {`,
       `  robot.look(event.clientX, event.clientY);`,
@@ -121,6 +124,8 @@ expressionButtons.replaceChildren(...faceExpressionNames.map((name) => {
 }));
 
 blinkButton.onclick = () => { void robot.blink(); };
+nodButton.onclick = () => { void robot.react('nod'); };
+shakeButton.onclick = () => { void robot.react('shake'); };
 
 let playing = false;
 playButton.onclick = async () => {
