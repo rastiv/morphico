@@ -3,6 +3,16 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 patch = nicer transitions and fixes, minor = new icon sets or options, major = API changes or a changed resting look of an icon.
 
+## Unreleased
+
+- New `countdown(element, until, options)`: a `text()` line that counts down by itself, every changed digit morphing.
+  `until` is a moment (a `Date` or a date string, `'2026-12-31T00:00'`) or a number of seconds (a timer). The format
+  (`mm:ss`, `hh:mm:ss`, `d:hh:mm:ss`) is chosen from the time left at the start and then kept, or set with `format`.
+  `onEnd` is called once at 0; `pause()`, `resume()`, `to(until)` (start again), `destroy()`.
+- Digits: 0 ↔ 5 in all five sets opens the 0 where the 5's top bar starts and runs along the bar.
+- Condensed digits: the 0 has the same rounded corners as 6, 8 and 9 (it had half-circle ends); 0 → 6 is 0 → 9
+  turned around.
+
 ## 1.1.0
 
 - `face()`: new `look()` — the pupils turn towards a point on the page (`look(event.clientX, event.clientY)`), towards
