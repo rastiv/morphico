@@ -221,8 +221,9 @@ photo.destroy();                                          // the element is whol
 
 Shapes (based on [Lucide](https://lucide.dev)): `circle`, `ellipse`, `heart`, `sparkle`, `astroid`, `bookmark`,
 `shield`, `moon`, `tag`, `square`, `badge`, `triangle`, `droplet`, `pentagon`, `hexagon`, `octagon`, `squircle`,
-`star`, `rectangle-horizontal`, `message-circle`, `message-square`, `cloud`, `puzzle`, `club`. A diamond is the `square`
-turned 45°, a portrait rectangle `rectangle-horizontal` turned 90° (`rotation`). The names are also exported as
+`star`, `rectangle-horizontal`, `message-circle`, `message-square`, `cloud`, `puzzle`, `club`, `arrow`, `cross`, `zap`,
+`flame`, `crown`, `gem`. A diamond is the `square` turned 45°, a portrait rectangle
+`rectangle-horizontal` turned 90°, an arrow pointing anywhere `arrow` turned (`rotation`). The names are also exported as
 `clipShapeNames` (type `ClipShape`: editors suggest them and TypeScript catches typos).
 
 | Option | Default | |

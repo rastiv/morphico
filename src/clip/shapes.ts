@@ -4,6 +4,7 @@
 import type { IconSet, Stroke } from '../types.ts';
 import { basicShapeNames, basicShapeOutlines } from './basic-shape-outlines.ts';
 import { withCornerRoundness } from './corner-roundness.ts';
+import { extraShapeNames, extraShapeOutlines } from './extra-shape-outlines.ts';
 import { moreShapeNames, moreShapeOutlines } from './more-shape-outlines.ts';
 import { clockwise, fitToBox, startAtTopMiddle } from './outline-normalizing.ts';
 
@@ -11,11 +12,11 @@ import { clockwise, fitToBox, startAtTopMiddle } from './outline-normalizing.ts'
 const SEGMENT_COUNT = 48;
 
 /** The names of clip()'s shapes. */
-export const clipShapeNames = [...basicShapeNames, ...moreShapeNames] as const;
+export const clipShapeNames = [...basicShapeNames, ...moreShapeNames, ...extraShapeNames] as const;
 export type ClipShape = typeof clipShapeNames[number];
 
 /** The shapes as Lucide draws them (Lucide coordinates); the set's states are made from these. */
-export const lucideShapeOutlines: Record<ClipShape, Stroke[]> = { ...basicShapeOutlines, ...moreShapeOutlines };
+export const lucideShapeOutlines: Record<ClipShape, Stroke[]> = { ...basicShapeOutlines, ...moreShapeOutlines, ...extraShapeOutlines };
 
 /** The shape set at a roundness (0 = sharp … 1 = Lucide's own corners); its strokes are built on first use. */
 const shapeSetWithRoundness = (roundness: number): IconSet => {
