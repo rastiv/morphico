@@ -11,7 +11,7 @@ import { createBlinking } from './blinking.ts';
 import { faceExpressionNames, faceExpressionPieces } from './expressions.ts';
 import type { FaceExpression } from './expressions.ts';
 import { createGaze } from './looking.ts';
-import { createReactions } from './reactions.ts';
+import { createReactions, posedFace } from './reactions.ts';
 import type { FaceReaction } from './reactions.ts';
 import { facePaths } from './paths.ts';
 import type { FacePieces } from './pieces.ts';
@@ -83,19 +83,25 @@ export const face = (element: Element, init: FaceExpression, options: FaceOption
   svg.style.overflow = 'visible';
   const clipPath = svg.appendChild(createSvgElement('clipPath', { id: clipId }));
   const eyesPath = clipPath.appendChild(createSvgElement('path'));
-  // the whole face, moved by reactions (the clip path follows: it is in the pupils' own coordinates)
+  // the whole face, squashed and tilted by reactions (the clip path follows: it is in the pupils' own coordinates)
   const facePieces = svg.appendChild(createSvgElement('g'));
   const featuresPath = facePieces.appendChild(createSvgElement('path'));
   const pupilsPath = facePieces.appendChild(createSvgElement('path', { fill: pupilColor, 'clip-path': `url(#${clipId})` }));
 
   const render = (): void => {
-    const paths = facePaths(blinked(lookingAt(shownPieces, gaze.direction, gaze.weight), blinking.openness));
+    const pose = reactions.pose;
+    const posed = pose ? posedFace(shownPieces, pose, expressions) : shownPieces;
+    const paths = facePaths(blinked(lookingAt(posed, gaze.direction, gaze.weight), blinking.openness * (pose?.openness ?? 1)));
     featuresPath.setAttribute('d', paths.features);
     eyesPath.setAttribute('d', paths.eyes);
     pupilsPath.setAttribute('d', paths.pupils);
-    const [offsetX, offsetY] = reactions.offset;
-    if (offsetX || offsetY) facePieces.setAttribute('transform', `translate(${offsetX.toFixed(3)} ${offsetY.toFixed(3)})`);
-    else facePieces.removeAttribute('transform');
+    if (pose && (pose.tilt || pose.scaleX !== 1 || pose.scaleY !== 1)) {
+      const number = (value: number) => value.toFixed(4);
+      facePieces.setAttribute('transform',
+        `rotate(${number(pose.tilt)} 12 14) translate(12 12) scale(${number(pose.scaleX)} ${number(pose.scaleY)}) translate(-12 -12)`);
+    } else {
+      facePieces.removeAttribute('transform');
+    }
   };
   const blinking = createBlinking({ blinksByItself, eyesOpen: () => !EYES_SHUT.includes(state), onChange: render });
   const gaze = createGaze(svg, render);
