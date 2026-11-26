@@ -260,6 +260,7 @@ robot.blink();                                // close and open the eyes once, o
 robot.look(emailInput);                       // the pupils turn towards an element…
 robot.look(event.clientX, event.clientY);     // …or a point on the page (viewport coordinates)
 robot.look();                                 // back to where the expression has them
+robot.react('nod');                           // a nod (yes, approval) — or 'shake' (no, disapproval)
 robot.destroy();                              // removes the face, stops blinking
 ```
 

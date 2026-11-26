@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Versions follow [Semant
 patch = nicer transitions and fixes, minor = new icon sets or options (and small corrections to a drawing, named
 here), major = API changes or an icon redrawn into a clearly different look.
 
+## Unreleased
+
+- `face()`: new `react(reaction)` — a short movement of the whole face on top of the expression: `'nod'` (yes,
+  approval) or `'shake'` (no, disapproval). Combine it with an expression: `to('smiling')` + `react('nod')`. The names
+  are exported as `faceReactionNames` (type `FaceReaction`).
+
 ## 1.4.0
 
 - `clip()`: six new shapes — `arrow` (turn it with `rotation` to point anywhere), `cross`, `zap`, `flame`, `crown`,
