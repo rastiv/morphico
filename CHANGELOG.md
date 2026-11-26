@@ -4,7 +4,7 @@ All notable changes to this project are documented here. Versions follow [Semant
 patch = nicer transitions and fixes, minor = new icon sets or options (and small corrections to a drawing, named
 here), major = API changes or an icon redrawn into a clearly different look.
 
-## Unreleased
+## 1.3.0
 
 - Seven new icon sets (from Lucide): `status` (success, error, warning, info — the sign changes inside the circle),
   `thumbs` (up, down — the hand turns over), `search` (search, close — the lens flattens into the ✕), `view` (grid,
