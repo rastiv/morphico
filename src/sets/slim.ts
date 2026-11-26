@@ -94,7 +94,9 @@ export const digitsSlim: IconSet = withTextCharacters({
       2: { startSegment: 5, reversed: true },
       3: { startSegment: 4, reversed: true },
       4: { startSegment: 10, reversed: true },
-      5: { startSegment: 5, reversed: true },
+      // the user's start point (2026-11-26): the 0 opens where the 5's bar starts (its point nearest to it, upper right)
+      // and runs left along the bar; the 5 keeps its default layout
+      5: { breakpoints: [0, 1 / 3, 2 / 3, 1, 4 / 3, 5 / 3, 2, 7 / 3, 8 / 3, 3, 3.5, 4, 13 / 3, 14 / 3, 5, 5.5, 6], startSegment: 15 },
       7: { startSegment: 5, reversed: true },
       9: { startSegment: 5, reversed: true },
     },
@@ -119,9 +121,6 @@ export const digitsSlim: IconSet = withTextCharacters({
       3: { breakpoints: [0, 1, 1.9792, 1.9792, 2, 2.1458, 2.2917, 2.4375, 2.4583, 2.5, 2.625, 2.7917, 2.9375, 2.9375, 2.9375, 2.9375, 3] },
       2: { breakpoints: [0, 1, 1.9583, 1.9583, 2, 2.0625, 2.2292, 2.3542, 2.4792, 2.6042, 2.75, 2.875, 3, 3, 3, 3, 3] },
       0: { breakpoints: [0, 0.5417, 0.7083, 0.8333, 1, 1.2083, 1.375, 1.5208, 1.6667, 1.8333, 1.9583, 2, 2.1875, 2.375, 2.5625, 2.7083, 3] },
-    },
-    5: {
-      0: { breakpoints: [0, 1, 1.1875, 1.1875, 1.1875, 1.1875, 2, 3, 3.25, 3.2917, 3.5, 3.75, 4, 4.5208, 4.8958, 5, 5] },
     },
     6: {
       8: { breakpoints: [0, 0.4583, 0.5208, 0.5208, 0.5417, 1, 1.875, 2, 2.5, 3, 3.5, 4, 5, 5.4583, 5.9792, 6, 7] },

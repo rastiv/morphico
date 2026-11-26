@@ -12,8 +12,9 @@ export const roundPairLayouts: IconSet['pairLayouts'] = {
     3: { startSegment: 3, reversed: true },
     // start at the lower right and go left: bottom → crossbar, left side → diagonal, right side → stem
     4: { startSegment: 7, reversed: true },
-    // optimizer: start at the upper left and go clockwise, the same way round as the 5's bowl
-    5: { startSegment: 2, reversed: true },
+    // the user's start point (2026-11-26): the 0 opens where the 5's bar starts (its point nearest to it, upper right)
+    // and runs left along the bar; the 5 keeps its default layout
+    5: { breakpoints: [0, 1 / 3, 2 / 3, 1, 4 / 3, 5 / 3, 2, 7 / 3, 8 / 3, 3, 3.3, 3.603, 4], startSegment: 11 },
     // start at the leftmost point and go up: the top becomes the bar, the right side the diagonal
     7: { startSegment: 3, reversed: true },
     // start at the bottom and go clockwise, the same way round as the 9's circle
@@ -57,7 +58,6 @@ export const roundPairLayouts: IconSet['pairLayouts'] = {
     8: { reversed: true },
   },
   5: {
-    0: { breakpoints: [0, 1, 1, 2, 2.2708, 2.3125, 2.4792, 2.625, 2.75, 2.8542, 3, 3, 3] },
     2: { breakpoints: [0, 1, 1, 1, 2, 2.2917, 2.2917, 2.2917, 2.2917, 2.5417, 2.8542, 2.8542, 3] },
     4: { breakpoints: [0, 1, 2, 2, 2, 2.0833, 2.1458, 2.1667, 2.1875, 2.25, 2.3958, 2.6875, 3] },
     // bar stays the bar, down-stroke + bowl straighten into the 7's diagonal (optimizer fit)
