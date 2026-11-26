@@ -134,7 +134,7 @@ Within a set every state's path is `M x y` + **exactly `segmentCount` cubic segm
 - `battery` (empty, low, medium, full): bars drawn bottom-up, several in one morph staggered (each 2 / (count + 1) of it, starting half that apart).
 
 ## Status: icon families, second batch (2026-11-26)
-- The user picked from Claude's list of 9 (1 status, 2 thumbs, 6 search, 7 view, 8 align; not yet: 3 heart / heart-off, 4 star / star-half / star-off, 5 bookmark / -check / -plus, 9 maximize-2 ↔ minimize-2). All Claude's drafts, waiting for the user's check in the preview.
+- The user picked from Claude's list of 9 (1 status, 2 thumbs, 6 search, 7 view, 8 align; not yet: 3 heart / heart-off, 4 star / star-half / star-off, 5 bookmark / -check / -plus, 9 maximize-2 ↔ minimize-2). All Claude's drafts, **all confirmed by the user ("famously good", 2026-11-26) — leave untouched.**
 - `status` (success, error, warning, info): circle fixed (4 segments); piece 2 = check's long stroke / ✕'s "/" / bars, piece 3 = check's short stroke / ✕'s "\" / dots (Lucide's tiny lines); circle-alert turned 180° is info → warning ↔ info pure spin (info's circle `startSegment: 2`, info's bar bottom → top, reversed for success / error).
 - `thumbs` (up, down): Lucide's thumbs-down is thumbs-up turned 180° in the same drawing order → pure spin (16 segments).
 - `search` (search, close): handle on the ✕'s "\" diagonal grows into it; the lens is flattened onto the "/" (`flatten`).
